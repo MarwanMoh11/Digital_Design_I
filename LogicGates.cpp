@@ -1,5 +1,17 @@
 #include "LogicGates.h"
 
+LogicGates::LogicGates()
+{
+}
+
+LogicGates::LogicGates(string n, int num, int d)
+{
+    delay = d;
+    numInputs = num;
+    name = n;
+}
+
+
 bool LogicGates::AND(vector<bool> inputs)
 {
     for (auto i : inputs)
@@ -72,4 +84,8 @@ bool LogicGates::XNOR(vector<bool> inputs)
 
     if (count == 1) return false;
     return true;
+}
+
+LogicGates::~LogicGates()
+{
 }
