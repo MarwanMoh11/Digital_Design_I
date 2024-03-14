@@ -98,8 +98,14 @@ void readstim(string x, unordered_map<string, pair<bool, int>>& inputs) {
         while (getline(iss, word, ',')) {
             switch (i) {
             case 0: tempDelay = stoi(word); break;   // Store delay
-            case 1: tempInput = word; break;         // Store input name
-            case 2: inputs[tempInput] = { stoi(word), tempDelay }; // Store input logic value and delay
+                case 1: {
+                    // Remove leading and trailing whitespace from the word
+                    stringstream ss;
+                    ss << word;
+                    ss >> tempInput;
+                    break;
+                }
+                case 2: inputs[tempInput] = { stoi(word), tempDelay }; // Store input logic value and delay
             }
             i++;
         }
@@ -142,6 +148,11 @@ int main() {
         cout << "Delay: " << g.g.getdelay()<< endl;
         cout << "Number of inputs: " << g.g.getnuminputs() << endl;
         cout << endl;
+    }
+
+    cout << "Inputs:" << endl;
+    for (const auto& input : inputs) {
+        cout << "Input Name: " << input.first << ", Logic Value: " << input.second.first << ", Delay: " << input.second.second << endl;
     }
 
     return 0;
