@@ -1,5 +1,4 @@
 #include <iostream>
-#include "LogicGates.h"
 #include <fstream>
 #include <string>
 #include <sstream>
@@ -7,6 +6,8 @@
 #include <unordered_map>
 #include<stack>
 #include<cctype>
+#include "Gates.h"
+#include "component.h"
 using namespace std;
 //support function to calculate precedence of logic operators
 int precedence(char op) { 
@@ -110,18 +111,11 @@ bool evaluatePostfix(const vector<string>& postfix, const vector<bool>& inputs) 
 
 
 
-//Struct to hold information about a logic gate
-struct component {
-    LogicGates g;               // LogicGates object representing the gate
-    vector<string> ins;         // Vector to store input names
-    string out;                 // Output name
-};
-
 // Function to read logic gates from a library file
-void readlib(string x,vector<LogicGates>& y) {
+void readlib(string x,vector<Gates>& y) {
     ifstream inputFile(x);      // Input file stream
-    vector<LogicGates> gates;   // Vector to store LogicGates objects
-    string array[3];            // Array to temporarily store gate information
+    vector<Gates> gates;   // Vector to store LogicGates objects
+    string array[4];            // Array to temporarily store gate information
 
     // Check if the file is successfully opened
     if (!inputFile.is_open()) {
@@ -135,14 +129,16 @@ void readlib(string x,vector<LogicGates>& y) {
         while (getline(iss, word, ',')) {
             cout << word;           // Print the word (for debugging)
             array[i] = word;       // Store the word in the temporary array
-            if (i == 2)            // Ignore Logic of Gate
-                continue;
-            else
                 i++;
         }
         cout << endl;
-        // Create a LogicGates object and push it into the vector
-        gates.push_back(LogicGates(array[0], stoi(array[1]), stoi(array[2])));
+        Gates g;
+        g.name = array[0];
+        g.numInputs = stoi(array[1]);
+        g.logic = array[2];
+        g.delay = stoi(array[3]);
+
+        gates.push_back(g);
     }
 
     inputFile.close();  // Close the input file
@@ -177,16 +173,9 @@ void readcirc(string x, unordered_map<string, pair<bool, int>>& inputs, vector<c
                     switch (i++) {
                         case 0:
                             continue;
-                            break;           // Skip the first word
+                            break;         
                         case 1:
-                            if(tempword=="NOT" || tempword == "BUFFER"){
-
-                            x.g.setName(tempword);}
-                            else {
-                                int end = tempword.size();
-                                string newword = tempword.substr(0,end-1);
-                                x.g.setName(newword);
-                            }
+                            x.name = tempword;
                             break;  // Set gate name
                         case 2:
                             x.out = tempword;
@@ -234,24 +223,27 @@ void readstim(string x, unordered_map<string, pair<bool, int>>& inputs) {
 }
 
 int main() {
-    // Test infix expression: (i1&~i2)|(~i1&i2)
-    string infixExpression = "i1&i2";
-    vector<bool> inputs = { true, false }; // Values for i1 and i2
-
-    // Convert infix to postfix
-    vector<string> postfixExpression = infixToPostfix(infixExpression);
-
-    // Evaluate postfix expression
-    bool result = evaluatePostfix(postfixExpression, inputs);
-
-    // Display result
-    cout << "Infix Expression: " << infixExpression << endl;
-    cout << "Postfix Expression: ";
-    for (const auto& token : postfixExpression) {
-        cout << token << " ";
+    vector<Gates> y; unordered_map<string, pair<bool, int>> map; vector<component> c;
+    readlib("examplelib.txt", y);
+    readcirc("examplecirc.txt", map, c);
+    readstim("examplestim.txt", map);
+    vector<bool> inputs;
+    for (int i = 0; i < c.size(); i++)
+    {
+        for (int j = 0; j < c[i].ins.size(); j++)
+        {
+            inputs.push_back(map[c[i].ins[j]].first);
+        }
+        for (int j = 0; j < y.size(); j++)
+        {
+            if (c[i].name == y[j].name)
+            {
+               evaluatePostfix(infixToPostfix(y[j].logic), inputs); 
+               break;
+            }
+        }
+        inputs.clear();
     }
-    cout << endl;
-    cout << "Result: " << result << endl;
 
     return 0;
 }
