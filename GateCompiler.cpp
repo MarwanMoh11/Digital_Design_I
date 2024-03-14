@@ -64,7 +64,7 @@ vector<string> infixToPostfix(const string& infix) {
     }
 }
 
-    bool evaluatePostfix(const vector<string>&postfix, unordered_map<string, pair<bool, int>>&inputs, vector<string>&ins) {
+    bool evaluatePostfix( vector<string>postfix, unordered_map<string, bool> inputs, vector<string>ins) {
         stack<bool> operands;
         unordered_map<string, string> map;
 
@@ -78,7 +78,7 @@ vector<string> infixToPostfix(const string& infix) {
 
         for (int i = 0; i < postfix.size(); i++) {
             if (isalpha(postfix[i].at(0))) {
-                operands.push(inputs[map[postfix[i]]].first); // Push the boolean value, not the pair
+                operands.push(inputs[postfix[i]]); // Push the boolean value, not the pair
             }
             else if (postfix[i] == "&" || postfix[i] == "|") { // Missing closing parenthesis after this condition
                 char ch = postfix[i][0]; // Extract the character
