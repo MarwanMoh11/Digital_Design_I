@@ -42,7 +42,7 @@ vector<LogicGates> readlib(string x)
     return gates;
 }
 
-void readcirc(string x, unordered_map <string, bool> &inputs, vector<gate> &gates)
+void readcirc(string x, unordered_map <string, pair<bool, int>> &inputs, vector<gate> &gates)
 {
     ifstream inputFile(x);
     if (!inputFile.is_open()) {
@@ -57,7 +57,7 @@ void readcirc(string x, unordered_map <string, bool> &inputs, vector<gate> &gate
         {
             while (getline(inputFile, line) && line != "COMPONENTS:")
             {
-                inputs[line] = false;
+                inputs[line] = { false,0 };
             }
 
         }
@@ -76,6 +76,7 @@ void readcirc(string x, unordered_map <string, bool> &inputs, vector<gate> &gate
                     case 2: x.out = word; break;
                     default: x.ins.push_back(word);
                     }
+                    i++;
                 }
                 gates.push_back(x);
             }
@@ -84,7 +85,32 @@ void readcirc(string x, unordered_map <string, bool> &inputs, vector<gate> &gate
 
     }
 }
-    
+ 
+void readstim(string x, unordered_map <string, pair<bool, int>>& inputs) {
+    ifstream inputFile(x); int tempDelay; string tempInput;
+    if (!inputFile.is_open()) {
+        cout << "Error opening file." << endl;
+        return;
+        string line, word;
+        while (getline(inputFile, line))
+        {
+            int i = 0;
+            istringstream iss(line);
+            while (getline(iss, word, ','))
+            {
+                switch (i)
+                {
+                case 0: tempDelay = stoi(word); break;
+                case 1: tempInput = word; break;
+                case 2: inputs[tempInput] = { stoi(word), tempDelay };
+             }
+                i++;
+            }
+        }
+
+
+    }
+}
 
 int main()
 {
