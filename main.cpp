@@ -9,7 +9,7 @@
 using namespace std;
 
 // Struct to hold information about a logic gate
-struct gate {
+struct component {
     LogicGates g;               // LogicGates object representing the gate
     vector<string> ins;         // Vector to store input names
     string out;                 // Output name
@@ -48,7 +48,7 @@ void readlib(string x,vector<LogicGates>& y) {
 }
 
 // Function to read circuit information from a file
-void readcirc(string x, unordered_map<string, pair<bool, int>>& inputs, vector<gate>& gates) {
+void readcirc(string x, unordered_map<string, pair<bool, int>>& inputs, vector<component>& gates) {
     ifstream inputFile(x);    // Input file stream
     if (!inputFile.is_open()) {
         cout << "Error opening file." << endl;
@@ -64,19 +64,35 @@ void readcirc(string x, unordered_map<string, pair<bool, int>>& inputs, vector<g
             }
         }
         else {
-            int i = 0;
-            istringstream iss(line);    // String stream to parse the line
-            gate x;
-            while (getline(iss, word, ',')) {
-                switch (i) {
-                case 0: continue; break;           // Skip the first word
-                case 1: x.g.setName(word); break;  // Set gate name
-                case 2: x.out = word; break;       // Set output name
-                default: x.ins.push_back(word);    // Add input name to vector
+            if(line != "COMPONENTS:") {
+                int i = 0;
+                istringstream iss(line);    // String stream to parse the line
+                component x;
+                while (getline(iss, word, ',')) {
+                    switch (i++) {
+                        case 0:
+                            continue;
+                            break;           // Skip the first word
+                        case 1:
+                            if(word==" NOT" || word == " BUFFER"){
+
+                            x.g.setName(word);}
+                            else {
+                                int end =word.size();
+                                string newword = word.substr(0,end-1);
+                                x.g.setName(newword);
+                            }
+                            break;  // Set gate name
+                        case 2:
+                            x.out = word;
+                            break;       // Set output name
+                        default:
+                            x.ins.push_back(word);    // Add input name to vector
+                    }
+
                 }
-                i++;
+                gates.push_back(x);   // Add the gate to the vector of gates
             }
-            gates.push_back(x);   // Add the gate to the vector of gates
         }
     }
 }
@@ -114,7 +130,7 @@ void readstim(string x, unordered_map<string, pair<bool, int>>& inputs) {
 
 int main() {
     vector<LogicGates> gates;
-    vector<gate> usedgates;
+    vector<component> usedgates;
     unordered_map<string, pair<bool, int>> inputs;
     readlib("examplelib.txt", gates);
     readcirc("examplecirc.txt",inputs,usedgates);
