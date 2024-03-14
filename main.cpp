@@ -150,7 +150,7 @@ void readcirc(string x, unordered_map<string, pair<bool, int>>& inputs, vector<c
     ifstream inputFile(x);    // Input file stream
     if (!inputFile.is_open()) {
         cout << "Error opening file." << endl;
-        return;
+        return; 
     }
 
     string line, word;
