@@ -1,5 +1,5 @@
 #include <iostream>
-#include "LogicGates.cpp"
+#include "LogicGates.h"
 #include <fstream>
 #include <string>
 #include <sstream>
@@ -67,27 +67,30 @@ void readcirc(string x, unordered_map<string, pair<bool, int>>& inputs, vector<c
             if(line != "COMPONENTS:") {
                 int i = 0;
                 istringstream iss(line);    // String stream to parse the line
-                component x;
+                component x; string tempword;
                 while (getline(iss, word, ',')) {
+                    stringstream ss;
+                    ss << word;
+                    ss >> tempword;
                     switch (i++) {
                         case 0:
                             continue;
                             break;           // Skip the first word
                         case 1:
-                            if(word==" NOT" || word == " BUFFER"){
+                            if(tempword=="NOT" || tempword == "BUFFER"){
 
-                            x.g.setName(word);}
+                            x.g.setName(tempword);}
                             else {
-                                int end =word.size();
-                                string newword = word.substr(0,end-1);
+                                int end = tempword.size();
+                                string newword = tempword.substr(0,end-1);
                                 x.g.setName(newword);
                             }
                             break;  // Set gate name
                         case 2:
-                            x.out = word;
+                            x.out = tempword;
                             break;       // Set output name
                         default:
-                            x.ins.push_back(word);    // Add input name to vector
+                            x.ins.push_back(tempword);    // Add input name to vector
                     }
 
                 }
