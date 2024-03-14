@@ -1,14 +1,114 @@
 #include <iostream>
 #include "LogicGates.h"
-#include "LogicGates.cpp"
 #include <fstream>
 #include <string>
 #include <sstream>
 #include <vector>
 #include <unordered_map>
-#include "GateCompiler.h"
-#include "GateCompiler.cpp"
+#include<stack>
+#include<cctype>
 using namespace std;
+//support function to calculate precedence of logic operators
+int precedence(char op) { 
+    if (op == '~')
+        return 3;
+    if (op == '&')
+        return 2;
+    if (op == '|')
+        return 1;
+    return 0;
+}
+string charToString(char c) {
+    return string(1, c); // Converts a character into a string of size 1
+}
+vector<string> infixToPostfix(const string& infix) {
+    stack<char> operators;
+    vector<string> postfix;
+    string temp;
+
+    for (char ch : infix) {
+        if (isalpha(ch)) {
+            temp.push_back(ch);
+        }
+        else if (isdigit(ch)) {
+            temp.push_back(ch);
+        }
+        else {
+            if (!temp.empty()) {
+                postfix.push_back(temp);
+                temp.clear();
+            }
+            if (ch == '(') {
+                operators.push(ch);
+            }
+            else if (ch == ')') {
+                while (!operators.empty() && operators.top() != '(') {
+                    postfix.push_back(charToString(operators.top()));
+                    operators.pop();
+                }
+                operators.pop(); // Discard '('
+            }
+            else { // Operator
+                while (!operators.empty() && precedence(ch) <= precedence(operators.top())) {
+                    postfix.push_back(charToString(operators.top()));
+                    operators.pop();
+                }
+                operators.push(ch);
+            }
+        }
+    }
+
+    if (!temp.empty()) {
+        postfix.push_back(temp);
+        temp.clear();
+    }
+
+    while (!operators.empty()) {
+        postfix.push_back(charToString(operators.top()));
+        operators.pop();
+    }
+
+    return postfix;
+}
+
+
+
+
+
+bool evaluatePostfix(const vector<string>& postfix, const vector<bool>& inputs) {
+    stack<bool> operands;
+
+    for (const string& token : postfix) {
+        if (isalpha(token[0])) {
+            // If token is an input variable, fetch its value from the inputs vector
+            int index = token[1] - '1'; // Assuming inputs are named as i1, i2, ..., and their values are provided in inputs vector
+            operands.push(inputs[index]);
+        }
+        else if (token == "~") {
+            // Negation operator
+            bool operand = operands.top();
+            operands.pop();
+            operands.push(!operand);
+        }
+        else {
+            // Binary operators: '&' and '|'
+            bool operand2 = operands.top();
+            operands.pop();
+            bool operand1 = operands.top();
+            operands.pop();
+            if (token == "&") {
+                operands.push(operand1 && operand2);
+            }
+            else if (token == "|") {
+                operands.push(operand1 || operand2);
+            }
+        }
+    }
+
+    return operands.top(); // The final result after evaluating the entire postfix expression
+}
+
+
 
 //Struct to hold information about a logic gate
 struct component {
@@ -134,52 +234,28 @@ void readstim(string x, unordered_map<string, pair<bool, int>>& inputs) {
 }
 
 int main() {
-    vector<LogicGates> gates;
-    vector<component> usedgates;
-    unordered_map<string, pair<bool, int>> inputs;
-    unordered_map<string, bool> inputs1;
-    readlib("examplelib.txt", gates);
-    readcirc("examplecirc.txt",inputs,usedgates);
-    readstim("examplestim.txt",inputs);
+    // Test infix expression: (i1&~i2)|(~i1&i2)
+    string infixExpression = "i1&i2";
+    vector<bool> inputs = { true, false }; // Values for i1 and i2
+
+    // Convert infix to postfix
+    vector<string> postfixExpression = infixToPostfix(infixExpression);
+
+    // Evaluate postfix expression
+    bool result = evaluatePostfix(postfixExpression, inputs);
+
+    // Display result
+    cout << "Infix Expression: " << infixExpression << endl;
+    cout << "Postfix Expression: ";
+    for (const auto& token : postfixExpression) {
+        cout << token << " ";
+    }
     cout << endl;
-
-    // Output each variable in a neat order for debugging
-    cout << "Vector of LogicGates:" << endl;
-    for (const auto& g : gates) {
-        cout << "LogicGates details: " << endl;
-        cout << "Name: " << g.getname() << endl;
-        cout << "Delay: " << g.getdelay()<< endl;
-        cout << "Number of inputs: " << g.getnuminputs() << endl;
-        cout << endl;
-    }
-
-    cout << endl;
-
-    // Output details of each gate object
-    for (const auto& g : usedgates) {
-        cout << "Gate Information:" << endl;
-        cout << "Output name: " << g.out << endl;
-        cout << "Input names: ";
-
-        cout << endl;
-        // Optionally, you can output details of the LogicGates object if needed
-        cout << "LogicGates details: " << endl;
-        cout << "Name: " << g.g.getname() << endl;
-        cout << "Delay: " << g.g.getdelay()<< endl;
-        cout << "Number of inputs: " << g.g.getnuminputs() << endl;
-        cout << endl;
-    }
-
-    cout << "Inputs:" << endl;
-    for (const auto& input : inputs) {
-        cout << "Input Name: " << input.first << ", Logic Value: " << input.second.first << ", Delay: " << input.second.second << endl;
-    }
-
-    vector<string> x = infixToPostfix("(i&~j)|(~i&j)");
-    cout<<evaluatePostfix(x, inputs1, usedgates.back().ins);
-
-
-
+    cout << "Result: " << result << endl;
 
     return 0;
 }
+
+
+
+
