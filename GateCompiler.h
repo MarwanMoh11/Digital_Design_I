@@ -9,4 +9,4 @@ public:
 	int infixToPostfix(const string&, unordered_map<string, pair<bool, int>>&, vector <string> &);
 };
 
-#endif 
+#endif

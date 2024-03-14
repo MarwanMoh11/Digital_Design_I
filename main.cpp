@@ -1,11 +1,13 @@
 #include <iostream>
 #include "LogicGates.h"
+#include "LogicGates.cpp"
 #include <fstream>
 #include <string>
 #include <sstream>
 #include <vector>
 #include <unordered_map>
-
+#include "GateCompiler.h"
+#include "GateCompiler.cpp"
 using namespace std;
 
 //Struct to hold information about a logic gate
@@ -135,6 +137,7 @@ int main() {
     vector<LogicGates> gates;
     vector<component> usedgates;
     unordered_map<string, pair<bool, int>> inputs;
+    unordered_map<string, bool> inputs1;
     readlib("examplelib.txt", gates);
     readcirc("examplecirc.txt",inputs,usedgates);
     readstim("examplestim.txt",inputs);
@@ -157,9 +160,7 @@ int main() {
         cout << "Gate Information:" << endl;
         cout << "Output name: " << g.out << endl;
         cout << "Input names: ";
-        for (const auto& input : g.ins) {
-            cout << input << " ";
-        }
+
         cout << endl;
         // Optionally, you can output details of the LogicGates object if needed
         cout << "LogicGates details: " << endl;
@@ -173,6 +174,12 @@ int main() {
     for (const auto& input : inputs) {
         cout << "Input Name: " << input.first << ", Logic Value: " << input.second.first << ", Delay: " << input.second.second << endl;
     }
+
+    vector<string> x = infixToPostfix("(i&~j)|(~i&j)");
+    cout<<evaluatePostfix(x, inputs1, usedgates.back().ins);
+
+
+
 
     return 0;
 }
