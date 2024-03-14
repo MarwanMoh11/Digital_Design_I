@@ -4,11 +4,26 @@ LogicGates::LogicGates()
 {
 }
 
-LogicGates::LogicGates(string n, int num, int d)
+LogicGates::LogicGates(string n, int num=1, int d=0)
 {
     delay = d;
     numInputs = num;
     name = n;
+}
+
+void LogicGates::setName(string n)
+{
+    name = n;
+}
+
+void LogicGates::setDelay(int d)
+{
+    delay = d;
+}
+
+void LogicGates::setNuminputs(int in)
+{
+    numInputs = in;
 }
 
 

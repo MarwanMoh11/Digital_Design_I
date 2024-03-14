@@ -11,6 +11,9 @@ private:
 public: 
 	LogicGates();
 	LogicGates(string, int, int);
+	void setName(string);
+	void setDelay(int);
+	void setNuminputs(int);
 	bool AND(vector<bool> x);
 	bool OR(vector <bool>);
 	bool NAND(vector < bool>);
