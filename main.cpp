@@ -1,5 +1,5 @@
 #include <iostream>
-#include "LogicGates.h"
+#include "LogicGates.cpp"
 #include <fstream>
 #include <string>
 #include <sstream>
@@ -16,7 +16,7 @@ struct gate {
 };
 
 // Function to read logic gates from a library file
-vector<LogicGates> readlib(string x) {
+void readlib(string x,vector<LogicGates>& y) {
     ifstream inputFile(x);      // Input file stream
     vector<LogicGates> gates;   // Vector to store LogicGates objects
     string array[3];            // Array to temporarily store gate information
@@ -24,7 +24,6 @@ vector<LogicGates> readlib(string x) {
     // Check if the file is successfully opened
     if (!inputFile.is_open()) {
         cout << "Error opening file." << endl;
-        return {};
     }
 
     string line, word;
@@ -39,12 +38,13 @@ vector<LogicGates> readlib(string x) {
             else
                 i++;
         }
+        cout << endl;
         // Create a LogicGates object and push it into the vector
         gates.push_back(LogicGates(array[0], stoi(array[1]), stoi(array[2])));
     }
 
     inputFile.close();  // Close the input file
-    return gates;       // Return the vector of LogicGates objects
+    y = gates;      // equate by reference
 }
 
 // Function to read circuit information from a file
@@ -107,8 +107,42 @@ void readstim(string x, unordered_map<string, pair<bool, int>>& inputs) {
 }
 
 int main() {
-    readlib("C:\\Users\\mazin\\OneDrive\\Desktop\\example.txt"); 
-    cout << endl << !true;  
+    vector<LogicGates> gates;
+    vector<gate> usedgates;
+    unordered_map<string, pair<bool, int>> inputs;
+    readlib("examplelib.txt", gates);
+    readcirc("examplecirc.txt",inputs,usedgates);
+    readstim("examplestim.txt",inputs);
+    cout << endl;
+
+    // Output each variable in a neat order for debugging
+    cout << "Vector of LogicGates:" << endl;
+    for (const auto& g : gates) {
+        cout << "LogicGates details: " << endl;
+        cout << "Name: " << g.getname() << endl;
+        cout << "Delay: " << g.getdelay()<< endl;
+        cout << "Number of inputs: " << g.getnuminputs() << endl;
+        cout << endl;
+    }
+
+    cout << endl;
+
+    // Output details of each gate object
+    for (const auto& g : usedgates) {
+        cout << "Gate Information:" << endl;
+        cout << "Output name: " << g.out << endl;
+        cout << "Input names: ";
+        for (const auto& input : g.ins) {
+            cout << input << " ";
+        }
+        cout << endl;
+        // Optionally, you can output details of the LogicGates object if needed
+        cout << "LogicGates details: " << endl;
+        cout << "Name: " << g.g.getname() << endl;
+        cout << "Delay: " << g.g.getdelay()<< endl;
+        cout << "Number of inputs: " << g.g.getnuminputs() << endl;
+        cout << endl;
+    }
 
     return 0;
 }

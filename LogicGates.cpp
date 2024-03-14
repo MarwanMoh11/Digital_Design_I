@@ -104,3 +104,15 @@ bool LogicGates::XNOR(vector<bool> inputs)
 LogicGates::~LogicGates()
 {
 }
+
+string LogicGates::getname() const {
+    return name;
+}
+
+int LogicGates::getdelay() const {
+    return delay;
+}
+
+int LogicGates::getnuminputs() const {
+    return numInputs;
+}
