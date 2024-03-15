@@ -102,6 +102,12 @@ vector<string> infixToPostfix(const string& infix) {
 
 bool evaluatePostfix(const vector<string>& postfix, unordered_map<string, pair<bool, int>>& map,  vector<component>& gs, int i) {
     stack<bool> operands;
+    int num = 1;
+
+    if(postfix.size()>4){ // If multiple expressions will be performed the operand must be changed accordingly
+        num = 0;
+    }
+
     int numofoperands = 0;
 
     for (const string& token : postfix) {
@@ -111,13 +117,15 @@ bool evaluatePostfix(const vector<string>& postfix, unordered_map<string, pair<b
             operands.push(map[gs[i].ins[numofoperands]].first);
             numofoperands++;
         }else {
+
             if (token == "~") {
                 // Negation operator
                 if (!operands.empty()) {
                     bool operand = operands.top();
                     operands.pop();
                     operands.push(!operand);
-                    map[gs[i].out].first = !operand;
+                    map[gs[i].ins[numofoperands-1]].first = !operand;
+                    numofoperands--;
 
                 } else {
                     // Handle error: Missing operand
@@ -127,11 +135,12 @@ bool evaluatePostfix(const vector<string>& postfix, unordered_map<string, pair<b
                 }
             }
             else {
+
                 // Binary operators: '&' and '|'
                 if (operands.size() < 2) {
                     // Handle error: Missing operands
                     // This could be due to incorrect postfix expression
-                    cerr << "Error: Missing operands for binary operator '" << token << "'" << endl;
+                    map[gs[i].out].first = operands.top();
                     return false;
                 }
                 bool operand2 = operands.top();
@@ -140,11 +149,13 @@ bool evaluatePostfix(const vector<string>& postfix, unordered_map<string, pair<b
                 operands.pop();
                 if (token == "&") {
                     operands.push(operand1 && operand2);
-                    map[gs[i].out].first = operand1 && operand2;
+                    map[gs[i].ins[numofoperands-num]].first = operand1 && operand2;
+                    numofoperands = 0;
                 }
                 else if (token == "|") {
                     operands.push(operand1 || operand2);
-                    map[gs[i].out].first = operand1 && operand2;
+                    map[gs[i].ins[numofoperands-num]].first = operand1 || operand2;
+                    numofoperands = 0;
                 }
             }
         }
@@ -158,6 +169,8 @@ bool evaluatePostfix(const vector<string>& postfix, unordered_map<string, pair<b
         cerr << "Error: Invalid expression" << endl;
         return false;
     }
+
+
 
     return operands.top(); // The final result after evaluating the entire postfix expression
 }
@@ -295,6 +308,10 @@ int main() {
             }
         }
     }
+
+    cout << "result: " << endl << map["Y"].first;
+
+
 
     return 0;
 }
