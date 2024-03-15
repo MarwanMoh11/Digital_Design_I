@@ -9,7 +9,31 @@
 #include "Gates.h"
 #include "component.h"
 using namespace std;
+
+bool isin(const string& str) {
+    bool hasAlphabetic = false;
+    bool hasNumeric = false;
+
+    for (char ch : str) {
+        if (std::isalpha(ch)) {
+            hasAlphabetic = true;
+        } else if (std::isdigit(ch)) {
+            hasNumeric = true;
+        }
+
+        // If both alphabetic or numeric characters are found, return true
+        if (hasAlphabetic || hasNumeric) {
+            return true;
+        }
+    }
+
+    // If neither alphabetic nor numeric characters are found, return false
+    return false;
+}
+
+
 //support function to calculate precedence of logic operators
+
 int precedence(char op) { 
     if (op == '~')
         return 3;
@@ -76,38 +100,68 @@ vector<string> infixToPostfix(const string& infix) {
 
 
 
-bool evaluatePostfix(const vector<string>& postfix, const vector<bool>& inputs) {
+bool evaluatePostfix(const vector<string>& postfix, unordered_map<string, pair<bool, int>>& map,  vector<component>& gs, int i) {
     stack<bool> operands;
+    int numofoperands = 0;
 
     for (const string& token : postfix) {
         if (isalpha(token[0])) {
             // If token is an input variable, fetch its value from the inputs vector
-            int index = token[1] - '1'; // Assuming inputs are named as i1, i2, ..., and their values are provided in inputs vector
-            operands.push(inputs[index]);
-        }
-        else if (token == "~") {
-            // Negation operator
-            bool operand = operands.top();
-            operands.pop();
-            operands.push(!operand);
-        }
-        else {
-            // Binary operators: '&' and '|'
-            bool operand2 = operands.top();
-            operands.pop();
-            bool operand1 = operands.top();
-            operands.pop();
-            if (token == "&") {
-                operands.push(operand1 && operand2);
+            int index = token[1]; // Assuming inputs are named as i1, i2, ..., and their values are provided in inputs vector
+            operands.push(map[gs[i].ins[numofoperands]].first);
+            numofoperands++;
+        }else {
+            if (token == "~") {
+                // Negation operator
+                if (!operands.empty()) {
+                    bool operand = operands.top();
+                    operands.pop();
+                    operands.push(!operand);
+                    map[gs[i].out].first = !operand;
+
+                } else {
+                    // Handle error: Missing operand
+                    // This could be due to incorrect postfix expression
+                    cerr << "Error: Missing operand for negation operator '~'" << endl;
+                    return false;
+                }
             }
-            else if (token == "|") {
-                operands.push(operand1 || operand2);
+            else {
+                // Binary operators: '&' and '|'
+                if (operands.size() < 2) {
+                    // Handle error: Missing operands
+                    // This could be due to incorrect postfix expression
+                    cerr << "Error: Missing operands for binary operator '" << token << "'" << endl;
+                    return false;
+                }
+                bool operand2 = operands.top();
+                operands.pop();
+                bool operand1 = operands.top();
+                operands.pop();
+                if (token == "&") {
+                    operands.push(operand1 && operand2);
+                    map[gs[i].out].first = operand1 && operand2;
+                }
+                else if (token == "|") {
+                    operands.push(operand1 || operand2);
+                    map[gs[i].out].first = operand1 && operand2;
+                }
             }
         }
+
+
+    }
+
+    if (operands.size() != 1) {
+        // Handle error: Invalid expression
+        // This could be due to incorrect postfix expression
+        cerr << "Error: Invalid expression" << endl;
+        return false;
     }
 
     return operands.top(); // The final result after evaluating the entire postfix expression
 }
+
 
 
 
@@ -138,7 +192,7 @@ void readlib(string x,vector<Gates>& y) {
         g.logic = array[2];
         g.delay = stoi(array[3]);
 
-        gates.push_back(g);
+        gates.emplace_back(g);
     }
 
     inputFile.close();  // Close the input file
@@ -223,26 +277,23 @@ void readstim(string x, unordered_map<string, pair<bool, int>>& inputs) {
 }
 
 int main() {
+    stack<bool> operands;
     vector<Gates> y; unordered_map<string, pair<bool, int>> map; vector<component> c;
     readlib("examplelib.txt", y);
     readcirc("examplecirc.txt", map, c);
     readstim("examplestim.txt", map);
-    vector<bool> inputs;
+    unordered_map<string,bool> inputs;
     for (int i = 0; i < c.size(); i++)
     {
-        for (int j = 0; j < c[i].ins.size(); j++)
-        {
-            inputs.push_back(map[c[i].ins[j]].first);
-        }
+
         for (int j = 0; j < y.size(); j++)
         {
             if (c[i].name == y[j].name)
             {
-               evaluatePostfix(infixToPostfix(y[j].logic), inputs); 
+               evaluatePostfix(infixToPostfix(y[j].logic), map, c, i);
                break;
             }
         }
-        inputs.clear();
     }
 
     return 0;
