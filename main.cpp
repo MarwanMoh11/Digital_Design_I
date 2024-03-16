@@ -6,10 +6,27 @@
 #include <unordered_map>
 #include<stack>
 #include<cctype>
+#include <queue>
 #include "Gates.h"
 #include "component.h"
 using namespace std;
-int greatestdelay = 0;
+struct outputs{
+
+    outputs(int x, string y, bool z){
+        time_stamp_ps = x;
+        input = y;
+        logic_value = z;
+    }
+
+    bool operator<(const outputs& other) const {
+        // This defines the order in the priority queue based on priority field
+        return time_stamp_ps > other.time_stamp_ps;
+    }
+
+    int time_stamp_ps;
+    string input;
+    bool logic_value;
+};
 
 bool isin(const string& str) {
     bool hasAlphabetic = false;
@@ -193,11 +210,11 @@ void readlib(string x,vector<Gates>& y) {
         int i = 0;
         istringstream iss(line);   // String stream to parse the line
         while (getline(iss, word, ',')) {
-            cout << word;           // Print the word (for debugging)
+            // Print the word (for debugging)
             array[i] = word;       // Store the word in the temporary array
                 i++;
         }
-        cout << endl;
+
         Gates g;
         g.name = array[0];
         g.numInputs = stoi(array[1]);
@@ -289,12 +306,19 @@ void readstim(string x, unordered_map<string, pair<bool, int>>& inputs) {
 }
 
 int main() {
+    priority_queue<outputs> pq;
     stack<bool> operands;
     vector<Gates> y; unordered_map<string, pair<bool, int>> map; vector<component> c;
     readlib("examplelib.txt", y);
     readcirc("examplecirc.txt", map, c);
     readstim("examplestim.txt", map);
     unordered_map<string,bool> inputs;
+
+    for (auto it = map.begin(); it != map.end(); ++it) {
+        outputs temp(it->second.second,it->first,it->second.first);
+        pq.push(temp);
+    }
+
     for (int i = 0; i < c.size(); i++)
     {
 
@@ -302,11 +326,18 @@ int main() {
         {
             if (c[i].name == y[j].name)
             {
-               evaluatePostfix(infixToPostfix(y[j].logic), map, c, i,y[j].delay);
-               cout << endl << map[c[i].out].second << ", " << c[i].out << ", " << map[c[i].out].first;
+                evaluatePostfix(infixToPostfix(y[j].logic), map, c, i,y[j].delay);
+                outputs temp(map[c[i].out].second,c[i].out,map[c[i].out].first);
+                pq.push(temp);
                break;
             }
         }
+    }
+
+
+    while(!pq.empty()){
+        cout << pq.top().time_stamp_ps << ", " << pq.top().logic_value << ", " << pq.top().input << endl;
+        pq.pop();
     }
 
 
