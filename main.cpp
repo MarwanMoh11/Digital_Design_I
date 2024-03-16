@@ -121,11 +121,6 @@ vector<string> infixToPostfix(const string& infix) {
 bool evaluatePostfix(const vector<string>& postfix, unordered_map<string, pair<bool, int>>& map,  vector<component>& gs, int i, int delay) {
     stack<bool> operands;
     int biggestinput = 0;
-
-
-
-
-
     for (const string& token : postfix) {
         if (isalpha(token[0])) {
             // If token is an input variable, fetch its value from the inputs vector
@@ -335,10 +330,29 @@ int main() {
     }
 
 
-    while(!pq.empty()){
-        cout << pq.top().time_stamp_ps << ", " << pq.top().logic_value << ", " << pq.top().input << endl;
-        pq.pop();
+    ofstream outputFile("simulation.txt");
+    if (outputFile.is_open()) {
+        // Temporarily redirect cout to outputFile
+        streambuf* coutBuffer = cout.rdbuf();
+        cout.rdbuf(outputFile.rdbuf());
+
+        // Output to cout (which is redirected to outputFile)
+        while(!pq.empty()){
+            cout << pq.top().time_stamp_ps << ", " << pq.top().logic_value << ", " << pq.top().input << endl;
+            pq.pop();
+        }
+
+        // Restore cout
+        cout.rdbuf(coutBuffer);
+
+        // Close the file
+        outputFile.close();
+        cout << "Output written to simulation.txt" << endl;
+    } else {
+        cerr << "Error: Unable to open file simulation.txt" << endl;
     }
+
+
 
 
 
