@@ -9,6 +9,7 @@
 #include "Gates.h"
 #include "component.h"
 using namespace std;
+int greatestdelay = 0;
 
 bool isin(const string& str) {
     bool hasAlphabetic = false;
@@ -100,8 +101,9 @@ vector<string> infixToPostfix(const string& infix) {
 
 
 
-bool evaluatePostfix(const vector<string>& postfix, unordered_map<string, pair<bool, int>>& map,  vector<component>& gs, int i) {
+bool evaluatePostfix(const vector<string>& postfix, unordered_map<string, pair<bool, int>>& map,  vector<component>& gs, int i, int delay) {
     stack<bool> operands;
+    int biggestinput = 0;
 
 
 
@@ -112,6 +114,7 @@ bool evaluatePostfix(const vector<string>& postfix, unordered_map<string, pair<b
             // If token is an input variable, fetch its value from the inputs vector
             int index = token[1] - '1'; // Assuming inputs are named as i1, i2, ..., and their values are provided in inputs vector
             operands.push(map[gs[i].ins[index]].first);
+            biggestinput = max(biggestinput, map[gs[i].ins[index]].second);
 
 
         }else {
@@ -137,6 +140,7 @@ bool evaluatePostfix(const vector<string>& postfix, unordered_map<string, pair<b
                     // Handle error: Missing operands
                     // This could be due to incorrect postfix expression
                     map[gs[i].out].first = operands.top();
+                    map[gs[i].out].second = map[gs[i].out].second + delay + biggestinput;
                     return false;
                 }
                 bool operand2 = operands.top();
@@ -298,13 +302,14 @@ int main() {
         {
             if (c[i].name == y[j].name)
             {
-               evaluatePostfix(infixToPostfix(y[j].logic), map, c, i);
+               evaluatePostfix(infixToPostfix(y[j].logic), map, c, i,y[j].delay);
+               cout << endl << map[c[i].out].second << ", " << c[i].out << ", " << map[c[i].out].first;
                break;
             }
         }
     }
 
-    cout << "result: " << endl << map["Z"].first;
+
 
 
 
