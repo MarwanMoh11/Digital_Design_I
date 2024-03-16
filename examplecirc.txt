@@ -3,5 +3,8 @@ A
 B
 C
 COMPONENTS:
-
-G3, OR2, Y, A, B
+G0, AND2, w1, A, C
+G1, AND2, w2, B, A
+G2, XNOR2, w3, w1, w2
+G3, NOR2, w4, w1, w2
+G4, XNOR2, Z, w3, w4

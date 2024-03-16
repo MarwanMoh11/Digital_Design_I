@@ -102,20 +102,18 @@ vector<string> infixToPostfix(const string& infix) {
 
 bool evaluatePostfix(const vector<string>& postfix, unordered_map<string, pair<bool, int>>& map,  vector<component>& gs, int i) {
     stack<bool> operands;
-    int num = 1;
 
-    if(postfix.size()>4){ // If multiple expressions will be performed the operand must be changed accordingly
-        num = 0;
-    }
 
-    int numofoperands = 0;
+
+
 
     for (const string& token : postfix) {
         if (isalpha(token[0])) {
             // If token is an input variable, fetch its value from the inputs vector
-            int index = token[1]; // Assuming inputs are named as i1, i2, ..., and their values are provided in inputs vector
-            operands.push(map[gs[i].ins[numofoperands]].first);
-            numofoperands++;
+            int index = token[1] - '1'; // Assuming inputs are named as i1, i2, ..., and their values are provided in inputs vector
+            operands.push(map[gs[i].ins[index]].first);
+
+
         }else {
 
             if (token == "~") {
@@ -124,8 +122,6 @@ bool evaluatePostfix(const vector<string>& postfix, unordered_map<string, pair<b
                     bool operand = operands.top();
                     operands.pop();
                     operands.push(!operand);
-                    map[gs[i].ins[numofoperands-1]].first = !operand;
-                    numofoperands--;
 
                 } else {
                     // Handle error: Missing operand
@@ -149,13 +145,12 @@ bool evaluatePostfix(const vector<string>& postfix, unordered_map<string, pair<b
                 operands.pop();
                 if (token == "&") {
                     operands.push(operand1 && operand2);
-                    map[gs[i].ins[numofoperands-num]].first = operand1 && operand2;
-                    numofoperands = 0;
+
                 }
                 else if (token == "|") {
                     operands.push(operand1 || operand2);
-                    map[gs[i].ins[numofoperands-num]].first = operand1 || operand2;
-                    numofoperands = 0;
+
+
                 }
             }
         }
@@ -309,7 +304,7 @@ int main() {
         }
     }
 
-    cout << "result: " << endl << map["Y"].first;
+    cout << "result: " << endl << map["Z"].first;
 
 
 
