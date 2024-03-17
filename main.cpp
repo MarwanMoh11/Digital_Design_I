@@ -6,10 +6,52 @@
 #include <unordered_map>
 #include<stack>
 #include<cctype>
+#include <queue>
 #include "Gates.h"
 #include "component.h"
 using namespace std;
+struct outputs{
+
+    outputs(int x, string y, bool z){
+        time_stamp_ps = x;
+        input = y;
+        logic_value = z;
+    }
+
+    bool operator<(const outputs& other) const {
+        // This defines the order in the priority queue based on priority field
+        return time_stamp_ps > other.time_stamp_ps;
+    }
+
+    int time_stamp_ps;
+    string input;
+    bool logic_value;
+};
+
+bool isin(const string& str) {
+    bool hasAlphabetic = false;
+    bool hasNumeric = false;
+
+    for (char ch : str) {
+        if (std::isalpha(ch)) {
+            hasAlphabetic = true;
+        } else if (std::isdigit(ch)) {
+            hasNumeric = true;
+        }
+
+        // If both alphabetic or numeric characters are found, return true
+        if (hasAlphabetic || hasNumeric) {
+            return true;
+        }
+    }
+
+    // If neither alphabetic nor numeric characters are found, return false
+    return false;
+}
+
+
 //support function to calculate precedence of logic operators
+
 int precedence(char op) { 
     if (op == '~')
         return 3;
@@ -76,38 +118,74 @@ vector<string> infixToPostfix(const string& infix) {
 
 
 
-bool evaluatePostfix(const vector<string>& postfix, const vector<bool>& inputs) {
+bool evaluatePostfix(const vector<string>& postfix, unordered_map<string, pair<bool, int>>& map,  vector<component>& gs, int i, int delay) {
     stack<bool> operands;
-
+    int biggestinput = 0;
     for (const string& token : postfix) {
         if (isalpha(token[0])) {
             // If token is an input variable, fetch its value from the inputs vector
             int index = token[1] - '1'; // Assuming inputs are named as i1, i2, ..., and their values are provided in inputs vector
-            operands.push(inputs[index]);
-        }
-        else if (token == "~") {
-            // Negation operator
-            bool operand = operands.top();
-            operands.pop();
-            operands.push(!operand);
-        }
-        else {
-            // Binary operators: '&' and '|'
-            bool operand2 = operands.top();
-            operands.pop();
-            bool operand1 = operands.top();
-            operands.pop();
-            if (token == "&") {
-                operands.push(operand1 && operand2);
+            operands.push(map[gs[i].ins[index]].first);
+            biggestinput = max(biggestinput, map[gs[i].ins[index]].second);
+
+
+        }else {
+
+            if (token == "~") {
+                // Negation operator
+                if (!operands.empty()) {
+                    bool operand = operands.top();
+                    operands.pop();
+                    operands.push(!operand);
+
+                } else {
+                    // Handle error: Missing operand
+                    // This could be due to incorrect postfix expression
+                    cerr << "Error: Missing operand for negation operator '~'" << endl;
+                    return false;
+                }
             }
-            else if (token == "|") {
-                operands.push(operand1 || operand2);
+            else {
+
+                // Binary operators: '&' and '|'
+                if (operands.size() < 2) {
+                    // Handle error: Missing operands
+                    // This could be due to incorrect postfix expression
+                    map[gs[i].out].first = operands.top();
+                    map[gs[i].out].second = map[gs[i].out].second + delay + biggestinput;
+                    return false;
+                }
+                bool operand2 = operands.top();
+                operands.pop();
+                bool operand1 = operands.top();
+                operands.pop();
+                if (token == "&") {
+                    operands.push(operand1 && operand2);
+
+                }
+                else if (token == "|") {
+                    operands.push(operand1 || operand2);
+
+
+                }
             }
         }
+
+
     }
+
+    if (operands.size() != 1) {
+        // Handle error: Invalid expression
+        // This could be due to incorrect postfix expression
+        cerr << "Error: Invalid expression" << endl;
+        return false;
+    }
+
+
 
     return operands.top(); // The final result after evaluating the entire postfix expression
 }
+
 
 
 
@@ -127,18 +205,18 @@ void readlib(string x,vector<Gates>& y) {
         int i = 0;
         istringstream iss(line);   // String stream to parse the line
         while (getline(iss, word, ',')) {
-            cout << word;           // Print the word (for debugging)
+            // Print the word (for debugging)
             array[i] = word;       // Store the word in the temporary array
                 i++;
         }
-        cout << endl;
+
         Gates g;
         g.name = array[0];
         g.numInputs = stoi(array[1]);
         g.logic = array[2];
         g.delay = stoi(array[3]);
 
-        gates.push_back(g);
+        gates.emplace_back(g);
     }
 
     inputFile.close();  // Close the input file
@@ -223,27 +301,62 @@ void readstim(string x, unordered_map<string, pair<bool, int>>& inputs) {
 }
 
 int main() {
+    priority_queue<outputs> pq;
+    stack<bool> operands;
     vector<Gates> y; unordered_map<string, pair<bool, int>> map; vector<component> c;
     readlib("examplelib.txt", y);
     readcirc("examplecirc.txt", map, c);
     readstim("examplestim.txt", map);
-    vector<bool> inputs;
+    unordered_map<string,bool> inputs;
+
+    for (auto it = map.begin(); it != map.end(); ++it) {
+        outputs temp(it->second.second,it->first,it->second.first);
+        pq.push(temp);
+    }
+
     for (int i = 0; i < c.size(); i++)
     {
-        for (int j = 0; j < c[i].ins.size(); j++)
-        {
-            inputs.push_back(map[c[i].ins[j]].first);
-        }
+
         for (int j = 0; j < y.size(); j++)
         {
             if (c[i].name == y[j].name)
             {
-               evaluatePostfix(infixToPostfix(y[j].logic), inputs); 
+                evaluatePostfix(infixToPostfix(y[j].logic), map, c, i,y[j].delay);
+                outputs temp(map[c[i].out].second,c[i].out,map[c[i].out].first);
+                pq.push(temp);
                break;
             }
         }
-        inputs.clear();
     }
+
+
+    ofstream outputFile("simulation.txt");
+    if (outputFile.is_open()) {
+        // Temporarily redirect cout to outputFile
+        streambuf* coutBuffer = cout.rdbuf();
+        cout.rdbuf(outputFile.rdbuf());
+
+        // Output to cout (which is redirected to outputFile)
+        while(!pq.empty()){
+            cout << pq.top().time_stamp_ps << ", " << pq.top().logic_value << ", " << pq.top().input << endl;
+            pq.pop();
+        }
+
+        // Restore cout
+        cout.rdbuf(coutBuffer);
+
+        // Close the file
+        outputFile.close();
+        cout << "Output written to simulation.txt" << endl;
+    } else {
+        cerr << "Error: Unable to open file simulation.txt" << endl;
+    }
+
+
+
+
+
+
 
     return 0;
 }
