@@ -4,8 +4,8 @@
 #include <sstream>
 #include <vector>
 #include <unordered_map>
-#include<stack>
-#include<cctype>
+#include <stack>
+#include <cctype>
 #include <queue>
 #include "Gates.h"
 #include "component.h"
@@ -15,10 +15,8 @@
 using namespace std;
 
 
-
 int main() {
     priority_queue<outputs> pq;
-    stack<bool> operands;
     vector<Gates> y; unordered_map<string, pair<bool, int>> map; vector<component> c;
 
     // Get file names from the user
@@ -40,7 +38,7 @@ int main() {
     readcirc(circFile, map, c);
     readstim(stimFile, map);
 
-    unordered_map<string,bool> inputs;
+
     unordered_map<string,bool> previousValues;
 
     // Initialize the inputs and store them with a constructor
@@ -72,11 +70,11 @@ int main() {
 
         // Output to cout (which is redirected to outputFile)
         while(!pq.empty()){
-            if (pq.top().logic_value == 1 && previousValues[pq.top().input] == 0) {
-                cout << pq.top().time_stamp_ps << ", " << pq.top().logic_value << ", " << pq.top().input << endl;
+            if (pq.top().logic_value == 1 && previousValues[pq.top().input] == 0 || pq.top().logic_value == 0 && previousValues[pq.top().input] == 1) {
+                cout << pq.top().time_stamp_ps << ", " << pq.top().logic_value << ", " << pq.top().input << endl; // Output to file
             }
-            previousValues[pq.top().input] = pq.top().logic_value;
-            pq.pop();
+            previousValues[pq.top().input] = pq.top().logic_value; // Update previous values
+            pq.pop(); // Pop the top element
         }
 
         // Restore cout to the terminal

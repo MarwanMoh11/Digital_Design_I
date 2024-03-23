@@ -3,7 +3,7 @@
 #include <iostream>
 #include <set>
 #include <stack>
-#include<vector>
+#include <vector>
 #include <unordered_map>
 #include "component.h"
 using namespace std;
@@ -86,19 +86,19 @@ vector<string> infixToPostfix(const string& infix) {
 
 
 bool evaluatePostfix(const vector<string>& postfix, unordered_map<string, pair<bool, int>>& map, vector<component>& gs, int i, int delay, priority_queue<outputs>& pq) {
-    stack<bool> operands;
-    vector<int> inputTimes;
-    set<int> uniqueDelays;
+    stack<bool> operands; // Stack to store operands
+    vector<int> inputTimes; // Vector to store input times
+    set<int> uniqueDelays;// Set to store unique delays
 
     for (const string& token : postfix) {
         if (isalpha(token[0])) {
-            int index = token[1] - '1';
-            operands.push(map[gs[i].ins[index]].first);
-            inputTimes.push_back(map[gs[i].ins[index]].second);
+            int index = token[1] - '1'; // Get the index of the input we do -1 because the inputs are named i1, i2, etc...
+            operands.push(map[gs[i].ins[index]].first);//push the value of the input to the stack
+            inputTimes.push_back(map[gs[i].ins[index]].second);//push the delay of the input to the vector
         }
         else {
-            if (token == "~") {
-                if (!operands.empty()) {
+            if (token == "~") { // we pop the top of the stack and negate it
+                if (!operands.empty()) {//if the stack is not empty
                     bool operand = operands.top();
                     operands.pop();
                     operands.push(!operand);
@@ -109,33 +109,34 @@ bool evaluatePostfix(const vector<string>& postfix, unordered_map<string, pair<b
                 }
             }
             else {
-                if (operands.size() < 2) {
+                if (operands.size() < 2) { //if the stack has less than 2 operands which means that we store output value and delay
                     map[gs[i].out].first = operands.top();
+                    // this whole for loop is to calculate the new delay and push it to the priority queue and make sure that we don't have duplicate delays for the same output
                     for (int inputTime : inputTimes) {
-                        int newDelay = inputTime + delay;
-                        if (uniqueDelays.find(newDelay) == uniqueDelays.end()) {
-                            map[gs[i].out].second = newDelay;
-                            outputs temp(map[gs[i].out].second, map[gs[i].out].first, gs[i].out);
-                            pq.push(temp);
-                            uniqueDelays.insert(newDelay);
+                        int newDelay = inputTime + delay; // Calculate the new delay
+                        if (uniqueDelays.find(newDelay) == uniqueDelays.end()) { // Check if the delay is unique
+                            map[gs[i].out].second = newDelay;//store the new delay
+                            outputs temp(map[gs[i].out].second, map[gs[i].out].first, gs[i].out); // Create an output object
+                            pq.push(temp);//push the output to the priority queue
+                            uniqueDelays.insert(newDelay);//insert the delay to the set
                         }
                     }
                     return false;
-                }
+                } //if the stack has 2 operands we pop the top 2 operands and apply the operator
                 bool operand2 = operands.top();
                 operands.pop();
                 bool operand1 = operands.top();
                 operands.pop();
                 if (token == "&") {
-                    operands.push(operand1 && operand2);
+                    operands.push(operand1 && operand2); //push the result of the operation to the stack
                 }
                 else if (token == "|") {
-                    operands.push(operand1 || operand2);
+                    operands.push(operand1 || operand2); //push the result of the operation to the stack
                 }
             }
         }
     }
-
+    // This if statement is to check if the expression is invalid
     if (operands.size() != 1) {
         cerr << "Error: Invalid expression" << endl;
         return false;
