@@ -68,9 +68,11 @@ int main() {
         streambuf* coutBuffer = cout.rdbuf();
         cout.rdbuf(outputFile.rdbuf());
 
+
+
         // Output to cout (which is redirected to outputFile)
         while(!pq.empty()){
-            if (pq.top().logic_value == 1 && previousValues[pq.top().input] == 0 || pq.top().logic_value == 0 && previousValues[pq.top().input] == 1) {
+            if (pq.top().logic_value == 1 && previousValues[pq.top().input] == 0 ) {
                 cout << pq.top().time_stamp_ps << ", " << pq.top().logic_value << ", " << pq.top().input << endl; // Output to file
             }
             previousValues[pq.top().input] = pq.top().logic_value; // Update previous values

@@ -115,10 +115,17 @@ bool evaluatePostfix(const vector<string>& postfix, unordered_map<string, pair<b
                     for (int inputTime : inputTimes) {
                         int newDelay = inputTime + delay; // Calculate the new delay
                         if (uniqueDelays.find(newDelay) == uniqueDelays.end()) { // Check if the delay is unique
-                            map[gs[i].out].second = newDelay;//store the new delay
-                            outputs temp(map[gs[i].out].second, map[gs[i].out].first, gs[i].out); // Create an output object
-                            pq.push(temp);//push the output to the priority queue
-                            uniqueDelays.insert(newDelay);//insert the delay to the set
+                            // Check if the index already exists in the map and if the stored delay is smaller
+                            if (map.find(gs[i].out) != map.end() && map[gs[i].out].second < newDelay) {
+                                map[gs[i].out].second = newDelay; // Update the delay in the map
+                                outputs temp(map[gs[i].out].second, map[gs[i].out].first, gs[i].out); // Create an output object with the new delay
+                                pq.push(temp); // Push the new output to the priority queue
+                            } else if (map.find(gs[i].out) == map.end()) { // If the index does not exist in the map
+                                map[gs[i].out].second = newDelay; // Store the new delay
+                                outputs temp(map[gs[i].out].second, map[gs[i].out].first, gs[i].out); // Create an output object
+                                pq.push(temp); // Push the output to the priority queue
+                            }
+                            uniqueDelays.insert(newDelay); // Insert the delay to the set
                         }
                     }
                     return false;
