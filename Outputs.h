@@ -6,7 +6,7 @@ using namespace std;
 
 struct outputs {
 
-    outputs(int x, string y, bool z) {
+    outputs(int x, bool z, string y) {
         time_stamp_ps = x;
         input = y;
         logic_value = z;

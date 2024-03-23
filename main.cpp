@@ -26,7 +26,7 @@ int main() {
     unordered_map<string,bool> inputs;
 
     for (auto it = map.begin(); it != map.end(); ++it) {
-        outputs temp(it->second.second,it->first,it->second.first);
+        outputs temp(it->second.second,it->second.first,it->first);
         pq.push(temp);
     }
 
@@ -38,7 +38,7 @@ int main() {
             if (c[i].name == y[j].name)
             {
                 evaluatePostfix(infixToPostfix(y[j].logic), map, c, i,y[j].delay);
-                outputs temp(map[c[i].out].second,c[i].out,map[c[i].out].first);
+                outputs temp(map[c[i].out].second,map[c[i].out].first,c[i].out);
                 pq.push(temp);
                break;
             }
