@@ -20,9 +20,26 @@ int main() {
     priority_queue<outputs> pq;
     stack<bool> operands;
     vector<Gates> y; unordered_map<string, pair<bool, int>> map; vector<component> c;
-    readlib("examplelib.txt", y);
-    readcirc("examplecirc.txt", map, c);
-    readstim("examplestim.txt", map);
+
+    // Get file names from the user
+    string libFile, circFile, stimFile;
+    cout << "Enter lib file path (0 for default):";
+    cin >> libFile;
+    libFile = (libFile == "0") ? "examplelib.txt" : libFile;
+
+    cout << "Enter circ file path (0 for default):";
+    cin >> circFile;
+    circFile = (circFile == "0") ? "examplecirc.txt" : circFile;
+
+    cout << "Enter stim file path (0 for default):";
+    cin >> stimFile;
+    stimFile = (stimFile == "0") ? "examplestim.txt" : stimFile;
+    cout << endl;
+
+    readlib(libFile, y);
+    readcirc(circFile, map, c);
+    readstim(stimFile, map);
+
     unordered_map<string,bool> inputs;
     unordered_map<string,bool> previousValues;
 
