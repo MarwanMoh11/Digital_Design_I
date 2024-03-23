@@ -1,6 +1,7 @@
 #ifndef Postfix_Functions_H
 #define Postfix_Functions_H
 #include <iostream>
+#include <set>
 #include <stack>
 #include<vector>
 #include <unordered_map>
@@ -84,43 +85,41 @@ vector<string> infixToPostfix(const string& infix) {
 
 
 
-bool evaluatePostfix(const vector<string>& postfix, unordered_map<string, pair<bool, int>>& map, vector<component>& gs, int i, int delay) {
+bool evaluatePostfix(const vector<string>& postfix, unordered_map<string, pair<bool, int>>& map, vector<component>& gs, int i, int delay, priority_queue<outputs>& pq) {
     stack<bool> operands;
-    int biggestinput = 0;
+    vector<int> inputTimes;
+    set<int> uniqueDelays;
+
     for (const string& token : postfix) {
         if (isalpha(token[0])) {
-            // If token is an input variable, fetch its value from the inputs vector
-            int index = token[1] - '1'; // Assuming inputs are named as i1, i2, ..., and their values are provided in inputs vector
+            int index = token[1] - '1';
             operands.push(map[gs[i].ins[index]].first);
-            biggestinput = max(biggestinput, map[gs[i].ins[index]].second);
-
-
+            inputTimes.push_back(map[gs[i].ins[index]].second);
         }
         else {
-
             if (token == "~") {
-                // Negation operator
                 if (!operands.empty()) {
                     bool operand = operands.top();
                     operands.pop();
                     operands.push(!operand);
-
                 }
                 else {
-                    // Handle error: Missing operand
-                    // This could be due to incorrect postfix expression
                     cout << "Error: Missing operand for negation operator '~'" << endl;
                     return false;
                 }
             }
             else {
-
-                // Binary operators: '&' and '|'
                 if (operands.size() < 2) {
-                    // Handle error: Missing operands
-                    // This could be due to incorrect postfix expression
                     map[gs[i].out].first = operands.top();
-                    map[gs[i].out].second = map[gs[i].out].second + delay + biggestinput;
+                    for (int inputTime : inputTimes) {
+                        int newDelay = inputTime + delay;
+                        if (uniqueDelays.find(newDelay) == uniqueDelays.end()) {
+                            map[gs[i].out].second = newDelay;
+                            outputs temp(map[gs[i].out].second, map[gs[i].out].first, gs[i].out);
+                            pq.push(temp);
+                            uniqueDelays.insert(newDelay);
+                        }
+                    }
                     return false;
                 }
                 bool operand2 = operands.top();
@@ -129,31 +128,21 @@ bool evaluatePostfix(const vector<string>& postfix, unordered_map<string, pair<b
                 operands.pop();
                 if (token == "&") {
                     operands.push(operand1 && operand2);
-
                 }
                 else if (token == "|") {
                     operands.push(operand1 || operand2);
-
-
                 }
             }
         }
-
-
     }
 
     if (operands.size() != 1) {
-        // Handle error: Invalid expression
-        // This could be due to incorrect postfix expression
         cerr << "Error: Invalid expression" << endl;
         return false;
     }
 
-
-
-    return operands.top(); // The final result after evaluating the entire postfix expression
+    return operands.top();
 }
-
 
 
 
