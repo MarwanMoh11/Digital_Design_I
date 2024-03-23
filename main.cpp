@@ -15,29 +15,6 @@
 using namespace std;
 
 
-bool isin(const string& str) {
-    bool hasAlphabetic = false;
-    bool hasNumeric = false;
-
-    for (char ch : str) {
-        if (std::isalpha(ch)) {
-            hasAlphabetic = true;
-        } else if (std::isdigit(ch)) {
-            hasNumeric = true;
-        }
-
-        // If both alphabetic or numeric characters are found, return true
-        if (hasAlphabetic || hasNumeric) {
-            return true;
-        }
-    }
-
-    // If neither alphabetic nor numeric characters are found, return false
-    return false;
-}
-
-
-
 
 int main() {
     priority_queue<outputs> pq;
