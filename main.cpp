@@ -50,54 +50,63 @@ string charToString(char c) {
     return string(1, c); // Converts a character into a string of size 1
 }
 vector<string> infixToPostfix(const string& infix) {
-    stack<char> operators;
-    vector<string> postfix;
-    string temp;
+    stack<char> operators; // Stack to store operators
+    vector<string> postfix; // Vector to store postfix expression
+    string temp; // Temporary string to store operands or multi-digit numbers
 
+    // Iterate through each character in the infix expression
     for (char ch : infix) {
-        if (isalpha(ch)) {
-            temp.push_back(ch);
+        // If the character is an alphabet or digit, it's part of an operand
+        if (isalpha(ch) || isdigit(ch)) {
+            temp.push_back(ch); // Append to the temporary string
         }
-        else if (isdigit(ch)) {
-            temp.push_back(ch);
-        }
+        // If the character is an operator
         else {
+            // If the temporary string is not empty, push it to the postfix expression
             if (!temp.empty()) {
                 postfix.push_back(temp);
-                temp.clear();
+                temp.clear(); // Clear the temporary string
             }
+            // If the character is an opening parenthesis
             if (ch == '(') {
-                operators.push(ch);
+                operators.push(ch); // Push it to the stack
             }
+            // If the character is a closing parenthesis
             else if (ch == ')') {
+                // Pop and push operators from the stack to postfix until '(' is encountered
                 while (!operators.empty() && operators.top() != '(') {
                     postfix.push_back(charToString(operators.top()));
                     operators.pop();
                 }
                 operators.pop(); // Discard '('
             }
-            else { // Operator
+            // If the character is an operator
+            else {
+                // Pop and push operators from the stack to postfix with higher precedence
                 while (!operators.empty() && precedence(ch) <= precedence(operators.top())) {
                     postfix.push_back(charToString(operators.top()));
                     operators.pop();
                 }
-                operators.push(ch);
+                operators.push(ch); // Push the current operator to the stack
             }
         }
     }
 
+    // If the temporary string is not empty, push it to the postfix expression
     if (!temp.empty()) {
         postfix.push_back(temp);
-        temp.clear();
+        temp.clear(); // Clear the temporary string
     }
 
+    // Push any remaining operators from the stack to postfix
     while (!operators.empty()) {
         postfix.push_back(charToString(operators.top()));
         operators.pop();
     }
 
-    return postfix;
+    return postfix; // Return the postfix expression
 }
+
 
 
 
@@ -315,7 +324,7 @@ int main() {
     }
 
 
-    ofstream outputFile("simulation.txt");
+    ofstream outputFile("simulation.sim");
     if (outputFile.is_open()) {
         // Temporarily redirect cout to outputFile
         streambuf* coutBuffer = cout.rdbuf();
@@ -332,9 +341,9 @@ int main() {
 
         // Close the file
         outputFile.close();
-        cout << "Output written to simulation.txt" << endl;
+        cout << "Output written to simulation.sim" << endl;
     } else {
-        cerr << "Error: Unable to open file simulation.txt" << endl;
+        cout << "Error: Unable to open file simulation.sim" << endl;
     }
 
 
