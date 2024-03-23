@@ -25,6 +25,7 @@ int main() {
     readstim("examplestim.txt", map);
     unordered_map<string,bool> inputs;
 
+    // Initialize the inputs and store them with a constructor
     for (auto it = map.begin(); it != map.end(); ++it) {
         outputs temp(it->second.second,it->second.first,it->first);
         pq.push(temp);
@@ -35,18 +36,18 @@ int main() {
 
         for (int j = 0; j < y.size(); j++)
         {
-            if (c[i].name == y[j].name)
+            if (c[i].name == y[j].name) //if the component name is the same as the gate name
             {
-                evaluatePostfix(infixToPostfix(y[j].logic), map, c, i,y[j].delay);
-                outputs temp(map[c[i].out].second,map[c[i].out].first,c[i].out);
-                pq.push(temp);
+                evaluatePostfix(infixToPostfix(y[j].logic), map, c, i,y[j].delay);//evaluate the postfix expression
+                outputs temp(map[c[i].out].second,map[c[i].out].first,c[i].out);//store the output in a temporary variable
+                pq.push(temp);//push the output to the priority queue
                break;
             }
         }
     }
 
 
-    ofstream outputFile("simulation.sim");
+    ofstream outputFile("simulation.sim");//open the output file
     if (outputFile.is_open()) {
         // Temporarily redirect cout to outputFile
         streambuf* coutBuffer = cout.rdbuf();
@@ -58,14 +59,14 @@ int main() {
             pq.pop();
         }
 
-        // Restore cout
+        // Restore cout to the terminal
         cout.rdbuf(coutBuffer);
 
         // Close the file
         outputFile.close();
-        cout << "Output written to simulation.sim" << endl;
+        cout << "Output written to simulation.sim" << endl; // Output to console
     } else {
-        cout << "Error: Unable to open file simulation.sim" << endl;
+        cout << "Error: Unable to open file simulation.sim" << endl; // Output to console
     }
 
 
