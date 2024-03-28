@@ -15,13 +15,12 @@
 #include "Input.h"
 using namespace std;
 
-
 int main() {
-    vector<Gates> gates; 
+    vector<Gates> gates;
     unordered_map<string, Input> map;
     vector<component> c;
-    priority_queue<outputs> pq;
-
+    priority_queue<Input> inputs;
+    unordered_map<string, pair<bool, int>> curr;
 
     // Get file names from the user
     string libFile, circFile, stimFile;
@@ -38,80 +37,72 @@ int main() {
     stimFile = (stimFile == "0") ? "examplestim.txt" : stimFile;
     cout << endl;
 
+    cout << "Reading library file: " << libFile << endl;
     readlib(libFile, gates);
-    readcirc(circFile, map, c);
-    readstim(stimFile, map);
-    
-    vector<bool> inputs;
-    vector<int> delays;
-    int tempMax=0;
-    int counter = 0;
-    int maxUsed = 0;
-    int tempMin = 1000000000;
-    string tempName;
-    for (int i = 0; i < c.size(); i++)
-    {
-        for (int j = 0; j < c[i].ins.size(); j++)
-        {
-            maxUsed += map[c[i].ins[j]].used - 1;
-       }
-        
-        
-        while(counter < maxUsed)
-        {
-            for (int j = 0; j < c[i].ins.size(); j++)
-            {
-                inputs.push_back(map[c[i].ins[j]].values[map[c[i].ins[j]].used].first);
-                delays.push_back(map[c[i].ins[j]].values[map[c[i].ins[j]].used].second);
-                tempMax = max(tempMax, delays.back());
-                counter += map[c[i].ins[j]].used;
-                if (map[c[i].ins[j]].values[map[c[i].ins[j]].used + 1].second < tempMin)
-                {
-                    tempMin = map[c[i].ins[j]].values[map[c[i].ins[j]].used + 1].second;
-                    tempName = map[c[i].ins[j]].name;
-                }
+    cout << "Library file read successfully." << endl;
 
-            }
-            for (int z = 0; z < gates.size(); z++)
-            {
-                if (gates[z].name == c[i].name)
-                {
-                    
-                    if (map.find(c[i].out) == map.end())
-                        map[c[i].out] = Input(c[i].out, evaluatePostfix(infixToPostfix(gates[z].logic), inputs), tempMax + gates[z].delay);
-                    else
-                        map[c[i].out].values.push_back({ evaluatePostfix(infixToPostfix(gates[z].logic), inputs) , tempMax + gates[z].delay });
-                    map[tempName].used++;
-                    tempMax = 0;
-                    delays.clear();
-                    inputs.clear();
-                    counter = 0;
-                }
-                break;
+    cout << "Reading circuit file: " << circFile << endl;
+    readcirc(circFile, inputs, c);
+    cout << "Circuit file read successfully." << endl;
 
-            }
+    int noIns = inputs.size();
+    cout << "Number of inputs: " << noIns << endl;
 
-        }
-        maxUsed = 0;
-
+    priority_queue<Input> temp = inputs;
+    while (!temp.empty()) {
+        curr[temp.top().name] = { 0, 0 };
+        temp.pop();
     }
-    
-    for (auto entry : map) {
-        // Loop over the values vector in Input
-        for (auto value : entry.second.values) {
-            // Create an outputs object and push it into the priority queue
-            outputs output(value.second, value.first, entry.first);
-            pq.push(output);
-            // Print the output values
-            cout << "Added output: time_stamp_ps = " << output.time_stamp_ps
-                << ", input = " << output.input
-                << ", logic_value = " << output.logic_value << endl;
+    cout << "Current map initialized." << endl;
+
+    cout << "Reading stimulus file: " << stimFile << endl;
+    readstim(stimFile, inputs);
+    cout << "Stimulus file read successfully." << endl;
+
+    vector<bool> tempins;
+    string logic;
+    int maxx = 0;
+    int tempDelay = 0;
+
+    for (int i = 0; i < c.size(); i++) {
+        temp = inputs;
+        for (int z = 0; z < c[i].ins.size(); z++) {
+            tempins.push_back(curr[c[i].ins[z]].first);
         }
+        for (int z = 0; z < tempins.size(); z++) {
+            cout << tempins[z] << endl;
+        }
+        for (int z = 0; z < gates.size(); z++) {
+            if (c[i].name == gates[z].name) {
+                logic = gates[z].logic;
+                tempDelay = gates[z].delay;
+
+            }
+        }
+
+        for (int j = 0; j < inputs.size(); j++) {
+            maxx = 0;
+            for (int z = 0; z < c[i].ins.size(); z++) {
+                if(!temp.empty())
+                if (c[i].ins[z] == temp.top().name) {
+                    curr[temp.top().name] = { temp.top().value, temp.top().time_stamp };
+                    tempins[z] = temp.top().value;
+                    temp.pop();
+                    maxx = max(maxx, curr[c[i].ins[z]].second);
+                    inputs.push(Input(c[i].out, evaluatePostfix(infixToPostfix(logic), tempins), maxx + tempDelay));
+                }
+            }
+        }
+        tempins.clear();
     }
 
 
+    cout << "Simulation results:" << endl;
+    while (!inputs.empty()) {
+        Input input = inputs.top();
+        inputs.pop();
+        cout << "Name: " << input.name << ", Value: " << input.value << ", Delay: " << input.time_stamp << endl;
+    }
 
     return 0;
 }
-
-

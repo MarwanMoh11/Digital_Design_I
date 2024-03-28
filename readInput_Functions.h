@@ -47,7 +47,7 @@ void readlib(string x, vector<Gates>& y) {
 }
 
 // Function to read circuit information from a file
-void readcirc(string x, unordered_map<string, Input> & inputs, vector<component>& gates) {
+void readcirc(string x, priority_queue<Input> & inputs, vector<component>& gates) {
     ifstream inputFile(x);    // Input file stream
     if (!inputFile.is_open()) {
         cout << "Error opening file." << endl;
@@ -59,7 +59,7 @@ void readcirc(string x, unordered_map<string, Input> & inputs, vector<component>
         if (line == "INPUTS:") {
             // Read input names until "COMPONENTS:" is encountered
             while (getline(inputFile, line) && line != "COMPONENTS:") {
-                inputs[line] = Input(line, 0, 0);   // Store input name and default logic value
+                inputs.push(Input(line, 0, 0));   // Store input name and default logic value
             }
         }
         else {
@@ -93,7 +93,7 @@ void readcirc(string x, unordered_map<string, Input> & inputs, vector<component>
 }
 
 // Function to read stimulus information from a file
-void readstim(string x, unordered_map<string, Input>& inputs) {
+void readstim(string x, priority_queue<Input>& inputs) {
     ifstream inputFile(x);    // Input file stream
     int tempDelay;            // Temporary variable to store delay
     string tempInput;         // Temporary variable to store input name
@@ -118,8 +118,8 @@ void readstim(string x, unordered_map<string, Input>& inputs) {
             }
             case 2: {
                 if (tempDelay == 0)
-                    inputs[tempInput].values.pop_back();
-                inputs[tempInput].values.push_back({stoi(word), tempDelay}); // Store input logic value and delay
+                    inputs.pop();
+                inputs.push(Input(tempInput, stoi(word), tempDelay)); // Store input logic value and delay
             }
             }
             i++;
