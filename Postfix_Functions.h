@@ -10,6 +10,7 @@ using namespace std;
 
 //support function to calculate precedence of logic operators
 
+// Function to calculate precedence of logic operators
 int precedence(char op) {
     if (op == '~')
         return 3;
@@ -19,137 +20,95 @@ int precedence(char op) {
         return 1;
     return 0;
 }
+
+// Function to convert char to string
 string charToString(char c) {
     return string(1, c); // Converts a character into a string of size 1
 }
-vector<string> infixToPostfix(const string& infix) {
-    stack<char> operators; // Stack to store operators
-    vector<string> postfix; // Vector to store postfix expression
-    string temp; // Temporary string to store operands or multi-digit numbers
 
-    // Iterate through each character in the infix expression
+vector<string> infixToPostfix(const string& infix) {
+    stack<char> operators;
+    vector<string> postfix;
+    string temp;
+
     for (char ch : infix) {
-        // If the character is an alphabet or digit, it's part of an operand
-        if (isalpha(ch) || isdigit(ch)) {
-            temp.push_back(ch); // Append to the temporary string
+        if (ch == ' ')
+            continue;
+        else if (isalpha(ch) || isdigit(ch)) {
+            temp.push_back(ch);
         }
-        // If the character is an operator
         else {
-            // If the temporary string is not empty, push it to the postfix expression
             if (!temp.empty()) {
                 postfix.push_back(temp);
-                temp.clear(); // Clear the temporary string
+                temp.clear();
             }
-            // If the character is an opening parenthesis
             if (ch == '(') {
-                operators.push(ch); // Push it to the stack
+                operators.push(ch);
             }
-            // If the character is a closing parenthesis
             else if (ch == ')') {
-                // Pop and push operators from the stack to postfix until '(' is encountered
                 while (!operators.empty() && operators.top() != '(') {
                     postfix.push_back(charToString(operators.top()));
                     operators.pop();
                 }
                 operators.pop(); // Discard '('
             }
-            // If the character is an operator
-            else {
-                // Pop and push operators from the stack to postfix with higher precedence
-                while (!operators.empty() && precedence(ch) <= precedence(operators.top())) {
+            else { // Operator
+                while (!operators.empty() && precedence(ch) < precedence(operators.top())) {
                     postfix.push_back(charToString(operators.top()));
                     operators.pop();
                 }
-                operators.push(ch); // Push the current operator to the stack
+                operators.push(ch);
             }
         }
     }
 
-    // If the temporary string is not empty, push it to the postfix expression
     if (!temp.empty()) {
         postfix.push_back(temp);
-        temp.clear(); // Clear the temporary string
+        temp.clear();
     }
 
-    // Push any remaining operators from the stack to postfix
     while (!operators.empty()) {
         postfix.push_back(charToString(operators.top()));
         operators.pop();
     }
 
-    return postfix; // Return the postfix expression
+    return postfix;
 }
 
 
 
-
-
-
-bool evaluatePostfix(const vector<string>& postfix, unordered_map<string, pair<bool, int>>& map, vector<component>& gs, int i, int delay, priority_queue<outputs>& pq) {
-    stack<bool> operands; // Stack to store operands
-    vector<int> inputTimes; // Vector to store input times
-    set<int> uniqueDelays;// Set to store unique delays
+// Function to evaluate postfix expression
+bool evaluatePostfix(const vector<string>& postfix, const vector<bool>& inputs) {
+    stack<bool> operands;
 
     for (const string& token : postfix) {
         if (isalpha(token[0])) {
-            int index = token[1] - '1'; // Get the index of the input we do -1 because the inputs are named i1, i2, etc...
-            operands.push(map[gs[i].ins[index]].first);//push the value of the input to the stack
-            inputTimes.push_back(map[gs[i].ins[index]].second);//push the delay of the input to the vector
+            // If token is an input variable, fetch its value from the inputs vector
+            int index = stoi(token.substr(1)) - 1; // Extract the numeric part of the input variable name
+            operands.push(inputs[index]);
+        }
+        else if (token == "~") {
+            // Negation operator
+            bool operand = operands.top();
+            operands.pop();
+            operands.push(!operand);
         }
         else {
-            if (token == "~") { // we pop the top of the stack and negate it
-                if (!operands.empty()) {//if the stack is not empty
-                    bool operand = operands.top();
-                    operands.pop();
-                    operands.push(!operand);
-                }
-                else {
-                    cout << "Error: Missing operand for negation operator '~'" << endl;
-                    return false;
-                }
+            // Binary operators: '&' and '|'
+            bool operand2 = operands.top();
+            operands.pop();
+            bool operand1 = operands.top();
+            operands.pop();
+            if (token == "&") {
+                operands.push(operand1 && operand2);
             }
-            else {
-                if (operands.size() < 2) { //if the stack has less than 2 operands which means that we store output value and delay
-                    map[gs[i].out].first = operands.top();
-                    // this whole for loop is to calculate the new delay and push it to the priority queue and make sure that we don't have duplicate delays for the same output
-                    for (int inputTime : inputTimes) {
-                        int newDelay = inputTime + delay; // Calculate the new delay
-                        if (uniqueDelays.find(newDelay) == uniqueDelays.end()) { // Check if the delay is unique
-                            // Check if the index already exists in the map and if the stored delay is smaller
-                            if (map.find(gs[i].out) != map.end() && map[gs[i].out].second < newDelay) {
-                                map[gs[i].out].second = newDelay; // Update the delay in the map
-                                outputs temp(map[gs[i].out].second, map[gs[i].out].first, gs[i].out); // Create an output object with the new delay
-                                pq.push(temp); // Push the new output to the priority queue
-                            } else if (map.find(gs[i].out) == map.end()) { // If the index does not exist in the map
-                                map[gs[i].out].second = newDelay; // Store the new delay
-                                outputs temp(map[gs[i].out].second, map[gs[i].out].first, gs[i].out); // Create an output object
-                                pq.push(temp); // Push the output to the priority queue
-                            }
-                            uniqueDelays.insert(newDelay); // Insert the delay to the set
-                        }
-                    }
-                    return false;
-                } //if the stack has 2 operands we pop the top 2 operands and apply the operator
-                bool operand2 = operands.top();
-                operands.pop();
-                bool operand1 = operands.top();
-                operands.pop();
-                if (token == "&") {
-                    operands.push(operand1 && operand2); //push the result of the operation to the stack
-                }
-                else if (token == "|") {
-                    operands.push(operand1 || operand2); //push the result of the operation to the stack
-                }
+            else if (token == "|") {
+                operands.push(operand1 || operand2);
             }
         }
     }
-    // This if statement is to check if the expression is invalid
-    if (operands.size() != 1) {
-        cerr << "Error: Invalid expression" << endl;
-        return false;
-    }
 
-    return operands.top();
+    return operands.top(); // The final result after evaluating the entire postfix expression
 }
 
 

@@ -8,16 +8,20 @@
 #include <cctype>
 #include <queue>
 #include "Gates.h"
-#include "component.h"
 #include "Outputs.h"
+#include "component.h"
 #include "Postfix_Functions.h"
 #include "readInput_Functions.h"
+#include "Input.h"
 using namespace std;
 
 
 int main() {
+    vector<Gates> gates; 
+    unordered_map<string, Input> map;
+    vector<component> c;
     priority_queue<outputs> pq;
-    vector<Gates> y; unordered_map<string, pair<bool, int>> map; vector<component> c;
+
 
     // Get file names from the user
     string libFile, circFile, stimFile;
@@ -34,63 +38,80 @@ int main() {
     stimFile = (stimFile == "0") ? "examplestim.txt" : stimFile;
     cout << endl;
 
-    readlib(libFile, y);
+    readlib(libFile, gates);
     readcirc(circFile, map, c);
     readstim(stimFile, map);
-
-
-    unordered_map<string,bool> previousValues;
-
-    // Initialize the inputs and store them with a constructor
-    for (auto it = map.begin(); it != map.end(); ++it) {
-        outputs temp(it->second.second,it->second.first,it->first);
-        pq.push(temp);
-        previousValues[it->first] = 0; // Initialize previous values to 0
-    }
-
+    
+    vector<bool> inputs;
+    vector<int> delays;
+    int tempMax=0;
+    int counter = 0;
+    int maxUsed = 0;
+    int tempMin = 1000000000;
+    string tempName;
     for (int i = 0; i < c.size(); i++)
     {
-        for (int j = 0; j < y.size(); j++)
+        for (int j = 0; j < c[i].ins.size(); j++)
         {
-            if (c[i].name == y[j].name) //if the component name is the same as the gate name
+            maxUsed += map[c[i].ins[j]].used - 1;
+       }
+        
+        
+        while(counter < maxUsed)
+        {
+            for (int j = 0; j < c[i].ins.size(); j++)
             {
-                evaluatePostfix(infixToPostfix(y[j].logic), map, c, i,y[j].delay, pq);//evaluate the postfix expression
-                outputs temp(map[c[i].out].second,map[c[i].out].first,c[i].out);//store the output in a temporary variable
-                pq.push(temp);//push the output to the priority queue
+                inputs.push_back(map[c[i].ins[j]].values[map[c[i].ins[j]].used].first);
+                delays.push_back(map[c[i].ins[j]].values[map[c[i].ins[j]].used].second);
+                tempMax = max(tempMax, delays.back());
+                counter += map[c[i].ins[j]].used;
+                if (map[c[i].ins[j]].values[map[c[i].ins[j]].used + 1].second < tempMin)
+                {
+                    tempMin = map[c[i].ins[j]].values[map[c[i].ins[j]].used + 1].second;
+                    tempName = map[c[i].ins[j]].name;
+                }
+
+            }
+            for (int z = 0; z < gates.size(); z++)
+            {
+                if (gates[z].name == c[i].name)
+                {
+                    
+                    if (map.find(c[i].out) == map.end())
+                        map[c[i].out] = Input(c[i].out, evaluatePostfix(infixToPostfix(gates[z].logic), inputs), tempMax + gates[z].delay);
+                    else
+                        map[c[i].out].values.push_back({ evaluatePostfix(infixToPostfix(gates[z].logic), inputs) , tempMax + gates[z].delay });
+                    map[tempName].used++;
+                    tempMax = 0;
+                    delays.clear();
+                    inputs.clear();
+                    counter = 0;
+                }
                 break;
+
             }
+
+        }
+        maxUsed = 0;
+
+    }
+    
+    for (auto entry : map) {
+        // Loop over the values vector in Input
+        for (auto value : entry.second.values) {
+            // Create an outputs object and push it into the priority queue
+            outputs output(value.second, value.first, entry.first);
+            pq.push(output);
+            // Print the output values
+            cout << "Added output: time_stamp_ps = " << output.time_stamp_ps
+                << ", input = " << output.input
+                << ", logic_value = " << output.logic_value << endl;
         }
     }
 
-    ofstream outputFile("simulation.sim");//open the output file
-    if (outputFile.is_open()) {
-        // Temporarily redirect cout to outputFile
-        streambuf* coutBuffer = cout.rdbuf();
-        cout.rdbuf(outputFile.rdbuf());
 
-
-
-        // Output to cout (which is redirected to outputFile)
-        while(!pq.empty()){
-            if (pq.top().logic_value == 1 && previousValues[pq.top().input] == 0 ) {
-                cout << pq.top().time_stamp_ps << ", " << pq.top().logic_value << ", " << pq.top().input << endl; // Output to file
-            }
-            previousValues[pq.top().input] = pq.top().logic_value; // Update previous values
-            pq.pop(); // Pop the top element
-        }
-
-        // Restore cout to the terminal
-        cout.rdbuf(coutBuffer);
-
-        // Close the file
-        outputFile.close();
-        cout << "Output written to simulation.sim" << endl; // Output to console
-    } else {
-        cout << "Error: Unable to open file simulation.sim" << endl; // Output to console
-    }
 
     return 0;
 }
-
 
 
