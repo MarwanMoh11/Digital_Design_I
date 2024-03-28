@@ -69,9 +69,6 @@ int main() {
         for (int z = 0; z < c[i].ins.size(); z++) {
             tempins.push_back(curr[c[i].ins[z]].first);
         }
-        for (int z = 0; z < tempins.size(); z++) {
-            cout << tempins[z] << endl;
-        }
         for (int z = 0; z < gates.size(); z++) {
             if (c[i].name == gates[z].name) {
                 logic = gates[z].logic;
@@ -85,11 +82,20 @@ int main() {
             for (int z = 0; z < c[i].ins.size(); z++) {
                 if(!temp.empty())
                 if (c[i].ins[z] == temp.top().name) {
-                    curr[temp.top().name] = { temp.top().value, temp.top().time_stamp };
-                    tempins[z] = temp.top().value;
-                    temp.pop();
-                    maxx = max(maxx, curr[c[i].ins[z]].second);
-                    inputs.push(Input(c[i].out, evaluatePostfix(infixToPostfix(logic), tempins), maxx + tempDelay));
+                    if (curr[temp.top().name].first == temp.top().value)
+                    {
+                        curr[temp.top().name] = { temp.top().value, temp.top().time_stamp };
+                        temp.pop();
+                        continue;
+                    }
+                    else
+                    {
+                        curr[temp.top().name] = { temp.top().value, temp.top().time_stamp };
+                        tempins[z] = temp.top().value;
+                        temp.pop();
+                        maxx = max(maxx, curr[c[i].ins[z]].second);
+                        inputs.push(Input(c[i].out, evaluatePostfix(infixToPostfix(logic), tempins), maxx + tempDelay));
+                    }
                 }
             }
         }
