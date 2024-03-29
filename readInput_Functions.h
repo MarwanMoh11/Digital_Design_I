@@ -142,7 +142,12 @@ void readstim(string x, priority_queue<Input>& inputs,unordered_map<string, pair
             case 2: {
                 if (valid)
                 {
-                  if (tempDelay == 0 && stoi(word) == 1) {
+                    if (stoi(word) != 0 && stoi(word) != 1)
+                    {
+                        cout << "Input value for " << tempInput << " at time stamp "<< tempDelay<<" is invalid: Value will be set to 0" << endl;
+                        word = "0";
+                  }
+                    if (tempDelay == 0 && stoi(word) == 1) {
                       curr[tempInput] = { 1, 0 };
                   }
                   else if (tempDelay != 0) {
