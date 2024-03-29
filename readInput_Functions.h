@@ -47,7 +47,7 @@ void readlib(string x, vector<Gates>& y) {
 }
 
 // Function to read circuit information from a file
-void readcirc(string x, priority_queue<Input> & inputs, vector<component>& gates) {
+void readcirc(string x, priority_queue<Input> & inputs, vector<component>& gates,unordered_map<string, pair<bool, int>>& curr) {
     ifstream inputFile(x);    // Input file stream
     if (!inputFile.is_open()) {
         cout << "Error opening file." << endl;
@@ -59,7 +59,7 @@ void readcirc(string x, priority_queue<Input> & inputs, vector<component>& gates
         if (line == "INPUTS:") {
             // Read input names until "COMPONENTS:" is encountered
             while (getline(inputFile, line) && line != "COMPONENTS:") {
-                inputs.push(Input(line, 0, 0));   // Store input name and default logic value
+                curr[line] = {0,0};
             }
         }
         else {
@@ -93,7 +93,7 @@ void readcirc(string x, priority_queue<Input> & inputs, vector<component>& gates
 }
 
 // Function to read stimulus information from a file
-void readstim(string x, priority_queue<Input>& inputs) {
+void readstim(string x, priority_queue<Input>& inputs,unordered_map<string, pair<bool, int>>& curr) {
     ifstream inputFile(x);    // Input file stream
     int tempDelay;            // Temporary variable to store delay
     string tempInput;         // Temporary variable to store input name
@@ -117,9 +117,11 @@ void readstim(string x, priority_queue<Input>& inputs) {
                 break;
             }
             case 2: {
-                if (tempDelay == 0)
-                    inputs.pop();
-                inputs.push(Input(tempInput, stoi(word), tempDelay)); // Store input logic value and delay
+                if (tempDelay == 0 && stoi(word) == 1){
+                    curr[tempInput] = { 1, 0 };
+                } else if (tempDelay != 0){
+                    inputs.push(Input(tempInput, stoi(word), tempDelay)); // Store input logic value and delay}
+                }
             }
             }
             i++;

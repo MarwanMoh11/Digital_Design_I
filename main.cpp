@@ -20,6 +20,7 @@ int main() {
     unordered_map<string, Input> map;
     vector<component> c;
     priority_queue<Input> inputs;
+    priority_queue<Input> temp;
     unordered_map<string, pair<bool, int>> curr;
 
     // Get file names from the user
@@ -42,22 +43,25 @@ int main() {
     cout << "Library file read successfully." << endl;
 
     cout << "Reading circuit file: " << circFile << endl;
-    readcirc(circFile, inputs, c);
+    readcirc(circFile, inputs, c,curr);
     cout << "Circuit file read successfully." << endl;
 
     int noIns = inputs.size();
     cout << "Number of inputs: " << noIns << endl;
 
-    priority_queue<Input> temp = inputs;
-    while (!temp.empty()) {
-        curr[temp.top().name] = { 0, 0 };
-        temp.pop();
-    }
+
     cout << "Current map initialized." << endl;
 
     cout << "Reading stimulus file: " << stimFile << endl;
-    readstim(stimFile, inputs);
+    readstim(stimFile, inputs,curr);
     cout << "Stimulus file read successfully." << endl;
+
+
+    for (auto& pair : curr) {
+        inputs.push(Input(pair.first, pair.second.first, pair.second.second));
+    }
+
+
 
     vector<bool> tempins;
     string logic;
@@ -73,32 +77,32 @@ int main() {
             if (c[i].name == gates[z].name) {
                 logic = gates[z].logic;
                 tempDelay = gates[z].delay;
-
             }
         }
 
-        for (int j = 0; j < inputs.size(); j++) {
+        int fixedsize = temp.size(); // Use the size of temp instead of inputs
+
+        for (int j = 0; j < fixedsize; j++) {
             maxx = 0;
-            for (int z = 0; z < c[i].ins.size(); z++) {
-                if(!temp.empty())
-                if (c[i].ins[z] == temp.top().name) {
-                    if (curr[temp.top().name].first == temp.top().value)
-                    {
-                        curr[temp.top().name] = { temp.top().value, temp.top().time_stamp };
-                        temp.pop();
-                        continue;
-                    }
-                    else
-                    {
-                        curr[temp.top().name] = { temp.top().value, temp.top().time_stamp };
-                        tempins[z] = temp.top().value;
-                        temp.pop();
-                        maxx = max(maxx, curr[c[i].ins[z]].second);
-                        inputs.push(Input(c[i].out, evaluatePostfix(infixToPostfix(logic), tempins), maxx + tempDelay));
+            bool found = false;
+            if (!temp.empty()) {
+                for (int z = 0; z < c[i].ins.size(); z++) {
+                    if (c[i].ins[z] == temp.top().name) {
+                        found = true;
+                        if (curr[temp.top().name].first == temp.top().value) {
+                            curr[temp.top().name] = { temp.top().value, temp.top().time_stamp };
+                        } else {
+                            curr[temp.top().name] = { temp.top().value, temp.top().time_stamp };
+                            tempins[z] = temp.top().value;
+                            maxx = max(maxx, curr[c[i].ins[z]].second);
+                            inputs.push(Input(c[i].out, evaluatePostfix(infixToPostfix(logic), tempins), maxx + tempDelay));
+                        }
                     }
                 }
+                temp.pop(); // Always pop the top element from temp
             }
         }
+
         tempins.clear();
     }
 
