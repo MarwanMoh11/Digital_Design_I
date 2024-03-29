@@ -4,20 +4,25 @@
 #include <sstream>
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 #include <stack>
 #include <cctype>
 #include <queue>
 #include "Gates.h"
-#include "component.h"
 #include "Outputs.h"
+#include "component.h"
 #include "Postfix_Functions.h"
 #include "readInput_Functions.h"
+#include "Input.h"
 using namespace std;
 
-
 int main() {
-    priority_queue<outputs> pq;
-    vector<Gates> y; unordered_map<string, pair<bool, int>> map; vector<component> c;
+    vector<Gates> gates;
+    unordered_map<string, Input> map;
+    vector<component> c;
+    priority_queue<Input> inputs;
+    priority_queue<Input> temp;
+    unordered_map<string, pair<bool, int>> curr;
 
     // Get file names from the user
     string libFile, circFile, stimFile;
@@ -34,63 +39,102 @@ int main() {
     stimFile = (stimFile == "0") ? "examplestim.txt" : stimFile;
     cout << endl;
 
-    readlib(libFile, y);
-    readcirc(circFile, map, c);
-    readstim(stimFile, map);
+    cout << "Reading library file: " << libFile << endl;
+    readlib(libFile, gates);
+    cout << "Library file read successfully." << endl;
+
+    cout << "Reading circuit file: " << circFile << endl;
+    readcirc(circFile, inputs, c,curr);
+    cout << "Circuit file read successfully." << endl;
+
+    int noIns = inputs.size();
+    cout << "Number of inputs: " << noIns << endl;
 
 
-    unordered_map<string,bool> previousValues;
+    cout << "Current map initialized." << endl;
 
-    // Initialize the inputs and store them with a constructor
-    for (auto it = map.begin(); it != map.end(); ++it) {
-        outputs temp(it->second.second,it->second.first,it->first);
-        pq.push(temp);
-        previousValues[it->first] = 0; // Initialize previous values to 0
+    cout << "Reading stimulus file: " << stimFile << endl;
+    readstim(stimFile, inputs,curr);
+    cout << "Stimulus file read successfully." << endl;
+
+
+    for (auto& pair : curr) {
+        inputs.push(Input(pair.first, pair.second.first, pair.second.second));
     }
 
-    for (int i = 0; i < c.size(); i++)
-    {
-        for (int j = 0; j < y.size(); j++)
-        {
-            if (c[i].name == y[j].name) //if the component name is the same as the gate name
-            {
-                evaluatePostfix(infixToPostfix(y[j].logic), map, c, i,y[j].delay, pq);//evaluate the postfix expression
-                outputs temp(map[c[i].out].second,map[c[i].out].first,c[i].out);//store the output in a temporary variable
-                pq.push(temp);//push the output to the priority queue
-                break;
+
+
+    vector<bool> tempins;
+    string logic;
+    int maxx = 0;
+    int tempDelay = 0;
+
+    for (int i = 0; i < c.size(); i++) {
+        temp = inputs;
+        for (int z = 0; z < c[i].ins.size(); z++) {
+            tempins.push_back(curr[c[i].ins[z]].first);
+        }
+        for (int z = 0; z < gates.size(); z++) {
+            if (c[i].name == gates[z].name) {
+                logic = gates[z].logic;
+                tempDelay = gates[z].delay;
             }
         }
+
+        int fixedsize = temp.size(); // Use the size of temp instead of inputs
+        for (int j = 0; j < fixedsize; j++) {
+            maxx = 0;
+            bool found = false;
+            if (!temp.empty()) {
+                for (int z = 0; z < c[i].ins.size(); z++) {
+                    if (c[i].ins[z] == temp.top().name) {
+                    found = true;
+                    curr[temp.top().name] = { temp.top().value, temp.top().time_stamp };
+                    tempins[z] = temp.top().value;
+                    maxx = max(maxx, curr[c[i].ins[z]].second);
+                    inputs.push(Input(c[i].out, evaluatePostfix(infixToPostfix(logic), tempins), maxx + tempDelay));
+
+                    }
+                }
+                temp.pop(); // Always pop the top element from temp
+            }
+        }
+
+        tempins.clear();
     }
 
-    ofstream outputFile("simulation.sim");//open the output file
-    if (outputFile.is_open()) {
-        // Temporarily redirect cout to outputFile
-        streambuf* coutBuffer = cout.rdbuf();
-        cout.rdbuf(outputFile.rdbuf());
+    unordered_map<string, bool> lastValueMap;
+    for (auto& pair : curr) {
+        lastValueMap[pair.first] = pair.second.first;
+    }
 
 
+    unordered_set<string> seenOutputs;
 
-        // Output to cout (which is redirected to outputFile)
-        while(!pq.empty()){
-            if (pq.top().logic_value == 1 && previousValues[pq.top().input] == 0 ) {
-                cout << pq.top().time_stamp_ps << ", " << pq.top().logic_value << ", " << pq.top().input << endl; // Output to file
+    cout << "Simulation results:" << endl;
+
+    while (!inputs.empty()) {
+        Input input = inputs.top();
+        inputs.pop();
+
+        // Check if the value has changed from the last time
+        if (lastValueMap[input.name] != input.value) {
+            // Update the last value map
+            lastValueMap[input.name] = input.value;
+
+            // Create a string representation of the output
+            stringstream ss;
+            ss << "Name: " << input.name << ", Value: " << input.value << ", Delay: " << input.time_stamp;
+            string outputStr = ss.str();
+
+            // Check if the output has already been printed
+            if (seenOutputs.find(outputStr) == seenOutputs.end()) {
+                // If it hasn't been printed, add it to the set and print it
+                seenOutputs.insert(outputStr);
+                cout << outputStr << endl;
             }
-            previousValues[pq.top().input] = pq.top().logic_value; // Update previous values
-            pq.pop(); // Pop the top element
         }
-
-        // Restore cout to the terminal
-        cout.rdbuf(coutBuffer);
-
-        // Close the file
-        outputFile.close();
-        cout << "Output written to simulation.sim" << endl; // Output to console
-    } else {
-        cout << "Error: Unable to open file simulation.sim" << endl; // Output to console
     }
 
     return 0;
 }
-
-
-

@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include "Gates.h"
 #include "component.h"
+#include "Input.h"
 using namespace std;
 
 // Function to read logic gates from a library file
@@ -46,7 +47,7 @@ void readlib(string x, vector<Gates>& y) {
 }
 
 // Function to read circuit information from a file
-void readcirc(string x, unordered_map<string, pair<bool, int>>& inputs, vector<component>& gates) {
+void readcirc(string x, priority_queue<Input> & inputs, vector<component>& gates,unordered_map<string, pair<bool, int>>& curr) {
     ifstream inputFile(x);    // Input file stream
     if (!inputFile.is_open()) {
         cout << "Error opening file." << endl;
@@ -58,7 +59,7 @@ void readcirc(string x, unordered_map<string, pair<bool, int>>& inputs, vector<c
         if (line == "INPUTS:") {
             // Read input names until "COMPONENTS:" is encountered
             while (getline(inputFile, line) && line != "COMPONENTS:") {
-                inputs[line] = { false,0 };   // Store input name and default logic value
+                curr[line] = {0,0};
             }
         }
         else {
@@ -92,7 +93,7 @@ void readcirc(string x, unordered_map<string, pair<bool, int>>& inputs, vector<c
 }
 
 // Function to read stimulus information from a file
-void readstim(string x, unordered_map<string, pair<bool, int>>& inputs) {
+void readstim(string x, priority_queue<Input>& inputs,unordered_map<string, pair<bool, int>>& curr) {
     ifstream inputFile(x);    // Input file stream
     int tempDelay;            // Temporary variable to store delay
     string tempInput;         // Temporary variable to store input name
@@ -115,7 +116,13 @@ void readstim(string x, unordered_map<string, pair<bool, int>>& inputs) {
                 ss >> tempInput;
                 break;
             }
-            case 2: inputs[tempInput] = { stoi(word), tempDelay }; // Store input logic value and delay
+            case 2: {
+                if (tempDelay == 0 && stoi(word) == 1){
+                    curr[tempInput] = { 1, 0 };
+                } else if (tempDelay != 0){
+                    inputs.push(Input(tempInput, stoi(word), tempDelay)); // Store input logic value and delay}
+                }
+            }
             }
             i++;
         }
