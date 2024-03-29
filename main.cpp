@@ -4,6 +4,7 @@
 #include <sstream>
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 #include <stack>
 #include <cctype>
 #include <queue>
@@ -81,22 +82,18 @@ int main() {
         }
 
         int fixedsize = temp.size(); // Use the size of temp instead of inputs
-
         for (int j = 0; j < fixedsize; j++) {
             maxx = 0;
             bool found = false;
             if (!temp.empty()) {
                 for (int z = 0; z < c[i].ins.size(); z++) {
                     if (c[i].ins[z] == temp.top().name) {
-                        found = true;
-                        if (curr[temp.top().name].first == temp.top().value) {
-                            curr[temp.top().name] = { temp.top().value, temp.top().time_stamp };
-                        } else {
-                            curr[temp.top().name] = { temp.top().value, temp.top().time_stamp };
-                            tempins[z] = temp.top().value;
-                            maxx = max(maxx, curr[c[i].ins[z]].second);
-                            inputs.push(Input(c[i].out, evaluatePostfix(infixToPostfix(logic), tempins), maxx + tempDelay));
-                        }
+                    found = true;
+                    curr[temp.top().name] = { temp.top().value, temp.top().time_stamp };
+                    tempins[z] = temp.top().value;
+                    maxx = max(maxx, curr[c[i].ins[z]].second);
+                    inputs.push(Input(c[i].out, evaluatePostfix(infixToPostfix(logic), tempins), maxx + tempDelay));
+
                     }
                 }
                 temp.pop(); // Always pop the top element from temp
@@ -106,12 +103,37 @@ int main() {
         tempins.clear();
     }
 
+    unordered_map<string, bool> lastValueMap;
+    for (auto& pair : curr) {
+        lastValueMap[pair.first] = pair.second.first;
+    }
+
+
+    unordered_set<string> seenOutputs;
 
     cout << "Simulation results:" << endl;
+
     while (!inputs.empty()) {
         Input input = inputs.top();
         inputs.pop();
-        cout << "Name: " << input.name << ", Value: " << input.value << ", Delay: " << input.time_stamp << endl;
+
+        // Check if the value has changed from the last time
+        if (lastValueMap[input.name] != input.value) {
+            // Update the last value map
+            lastValueMap[input.name] = input.value;
+
+            // Create a string representation of the output
+            stringstream ss;
+            ss << "Name: " << input.name << ", Value: " << input.value << ", Delay: " << input.time_stamp;
+            string outputStr = ss.str();
+
+            // Check if the output has already been printed
+            if (seenOutputs.find(outputStr) == seenOutputs.end()) {
+                // If it hasn't been printed, add it to the set and print it
+                seenOutputs.insert(outputStr);
+                cout << outputStr << endl;
+            }
+        }
     }
 
     return 0;
