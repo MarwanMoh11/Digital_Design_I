@@ -44,17 +44,14 @@ int main() {
     cout << "Library file read successfully." << endl;
 
     cout << "Reading circuit file: " << circFile << endl;
-    readcirc(circFile, inputs, c,curr);
+    readcirc(circFile, inputs, c, curr, gates);
     cout << "Circuit file read successfully." << endl;
-
-    int noIns = inputs.size();
-    cout << "Number of inputs: " << noIns << endl;
 
 
     cout << "Current map initialized." << endl;
 
     cout << "Reading stimulus file: " << stimFile << endl;
-    readstim(stimFile, inputs,curr);
+    readstim(stimFile, inputs, curr);
     cout << "Stimulus file read successfully." << endl;
 
 
@@ -88,11 +85,11 @@ int main() {
             if (!temp.empty()) {
                 for (int z = 0; z < c[i].ins.size(); z++) {
                     if (c[i].ins[z] == temp.top().name) {
-                    found = true;
-                    curr[temp.top().name] = { temp.top().value, temp.top().time_stamp };
-                    tempins[z] = temp.top().value;
-                    maxx = max(maxx, curr[c[i].ins[z]].second);
-                    inputs.push(Input(c[i].out, evaluatePostfix(infixToPostfix(logic), tempins), maxx + tempDelay));
+                        found = true;
+                        curr[temp.top().name] = { temp.top().value, temp.top().time_stamp };
+                        tempins[z] = temp.top().value;
+                        maxx = max(maxx, curr[c[i].ins[z]].second);
+                        inputs.push(Input(c[i].out, evaluatePostfix(infixToPostfix(logic), tempins), maxx + tempDelay));
 
                     }
                 }
@@ -110,8 +107,14 @@ int main() {
 
 
     unordered_set<string> seenOutputs;
+    bool written = false; // To check if output is written in sim file
+    ofstream outputFile("simulation.sim"); // Open the file for writing
 
-    cout << "Simulation results:" << endl;
+    if (!outputFile.is_open()) {
+        cout << "Error: Unable to open output file." << std::endl;
+        return 1; // Return with an error code if file opening fails
+    }
+
 
     while (!inputs.empty()) {
         Input input = inputs.top();
@@ -124,17 +127,20 @@ int main() {
 
             // Create a string representation of the output
             stringstream ss;
-            ss << "Name: " << input.name << ", Value: " << input.value << ", Delay: " << input.time_stamp;
+            ss << input.time_stamp << ", " << input.name << ", " << input.value;
             string outputStr = ss.str();
 
             // Check if the output has already been printed
             if (seenOutputs.find(outputStr) == seenOutputs.end()) {
-                // If it hasn't been printed, add it to the set and print it
+                // If it hasn't been printed, add it to the set and write it to the file
                 seenOutputs.insert(outputStr);
-                cout << outputStr << endl;
+                outputFile << outputStr << endl;
             }
         }
+        written = true;
     }
+    if(written) cout << "Output written to simulation.sim";
 
+    outputFile.close(); // Close the file
     return 0;
 }

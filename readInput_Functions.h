@@ -47,15 +47,16 @@ void readlib(string x, vector<Gates>& y) {
 }
 
 // Function to read circuit information from a file
-void readcirc(string x, priority_queue<Input> & inputs, vector<component>& gates,unordered_map<string, pair<bool, int>>& curr) {
+void readcirc(string x, priority_queue<Input> & inputs, vector<component>& gates,unordered_map<string, pair<bool, int>>& curr, vector<Gates> y) {
     ifstream inputFile(x);    // Input file stream
     if (!inputFile.is_open()) {
         cout << "Error opening file." << endl;
         return;
     }
-
-    string line, word;
+    bool valid;
+    string line, word; 
     while (getline(inputFile, line)) {
+        valid = false;
         if (line == "INPUTS:") {
             // Read input names until "COMPONENTS:" is encountered
             while (getline(inputFile, line) && line != "COMPONENTS:") {
@@ -76,9 +77,22 @@ void readcirc(string x, priority_queue<Input> & inputs, vector<component>& gates
                         continue;
                         break;
                     case 1:
+                        for (int j = 0; j < y.size(); j++)
+                            if (y[j].name == tempword)
+                                valid = true;
+                        if (!valid)
+                        {
+                            cout << "Gate "<< tempword<<" Not Found in Library: Program will be terminated";
+                            exit(EXIT_SUCCESS);
+                        }
                         x.name = tempword;
                         break;  // Set gate name
                     case 2:
+                        if (curr.find(tempword) != curr.end())
+                        {
+                            cout << "Invalid Output, Clashing wires in " << x.name << " Gate: Program will be terminated";
+                            exit(EXIT_SUCCESS);
+                        }
                         x.out = tempword;
                         break;       // Set output name
                     default:
@@ -97,6 +111,7 @@ void readstim(string x, priority_queue<Input>& inputs,unordered_map<string, pair
     ifstream inputFile(x);    // Input file stream
     int tempDelay;            // Temporary variable to store delay
     string tempInput;         // Temporary variable to store input name
+    bool valid=true;
     if (!inputFile.is_open()) {
         cout << "Error opening file." << endl;
         return;
@@ -105,8 +120,10 @@ void readstim(string x, priority_queue<Input>& inputs,unordered_map<string, pair
     string line, word;
     while (getline(inputFile, line)) {
         int i = 0;
+        valid = true;
         istringstream iss(line);    // String stream to parse the line
         while (getline(iss, word, ',')) {
+
             switch (i) {
             case 0: tempDelay = stoi(word); break;   // Store delay
             case 1: {
@@ -114,17 +131,29 @@ void readstim(string x, priority_queue<Input>& inputs,unordered_map<string, pair
                 stringstream ss;
                 ss << word;
                 ss >> tempInput;
+                if (curr.find(tempInput) == curr.end())
+                {
+                    cout << "Invalid Input in stim file: Input " << tempInput << " will be ignored" << endl;
+                    valid = false;
+                }
+
                 break;
             }
             case 2: {
-                if (tempDelay == 0 && stoi(word) == 1){
-                    curr[tempInput] = { 1, 0 };
-                } else if (tempDelay != 0){
-                    inputs.push(Input(tempInput, stoi(word), tempDelay)); // Store input logic value and delay}
-                }
+                if (valid)
+                {
+                  if (tempDelay == 0 && stoi(word) == 1) {
+                      curr[tempInput] = { 1, 0 };
+                  }
+                  else if (tempDelay != 0) {
+                      inputs.push(Input(tempInput, stoi(word), tempDelay)); // Store input logic value and delay}
+                  }
             }
+        }
+            
             }
             i++;
+            
         }
     }
 }
