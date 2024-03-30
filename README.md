@@ -16,3 +16,16 @@ This program simulates a digital circuit based on input from three files: a libr
 - `Input.h`: This file contains the `Input` class which represents an input to the circuit.
 
 
+# Logic Circuit Simulator
+
+This is a C++ program for simulating logic circuits. It reads circuit information from a `.cir` file, library information from a `.lib` file, and stimulus information from a `.stim` file.
+
+## How to Run
+
+To run the simulator, follow these steps:
+
+1. **Compile the Code**: Use a C++ compiler to compile the code into an executable. e.g. bash or windows terminal
+2. **How to use terminal**: Open the terminal in the file directory the source code files are placed in.
+3. **Command**:   'g++ main.cpp -o logiscm'
+                   ./logiscm <.lib> <.cir> <.stim>
+4. Replace <.lib> <.cir> <.stim> with the file paths that are being read by the program
