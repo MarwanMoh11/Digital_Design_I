@@ -14,9 +14,22 @@
 #include "Postfix_Functions.h"
 #include "readInput_Functions.h"
 #include "Input.h"
+#include <cstdlib>
 using namespace std;
 
-int main() {
+int main(int argc, char* argv[]) {
+    if (argc != 4) {
+        cerr << "Usage: " << argv[0] << " <lib file> <circ file> <stim file>" << endl;
+        return 1;
+    }
+    string libFile, circFile, stimFile;
+
+    // File paths from command-line arguments
+     libFile = argv[1];
+     circFile = argv[2];
+     stimFile = argv[3];
+    
+    
     vector<Gates> gates;
     unordered_map<string, Input> map;
     vector<component> c;
@@ -24,20 +37,6 @@ int main() {
     priority_queue<Input> temp;
     unordered_map<string, pair<bool, int>> curr;
 
-    // Get file names from the user
-    string libFile, circFile, stimFile;
-    cout << "Enter lib file path (0 for default):";
-    cin >> libFile;
-    libFile = (libFile == "0") ? "examplelib.txt" : libFile;
-
-    cout << "Enter circ file path (0 for default):";
-    cin >> circFile;
-    circFile = (circFile == "0") ? "examplecirc.txt" : circFile;
-
-    cout << "Enter stim file path (0 for default):";
-    cin >> stimFile;
-    stimFile = (stimFile == "0") ? "examplestim.txt" : stimFile;
-    cout << endl;
 
     cout << "Reading library file: " << libFile << endl;
     readlib(libFile, gates);
@@ -142,5 +141,6 @@ int main() {
     if(written) cout << "Output written to simulation.sim";
 
     outputFile.close(); // Close the file
+    system("simulation.sim"); // automatically opens .sim file
     return 0;
 }
