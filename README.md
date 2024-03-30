@@ -26,6 +26,6 @@ To run the simulator, follow these steps:
 
 1. **Compile the Code**: Use a C++ compiler to compile the code into an executable. e.g. bash or windows terminal
 2. **How to use terminal**: Open the terminal in the file directory the source code files are placed in.
-3. **Commands**:  * `g++ main.cpp -o logiscm`
-                  * `./logiscm <.lib> <.cir> <.stim>`
+3. **Commands**:   `g++ main.cpp -o logiscm`
+                   `./logiscm <.lib> <.cir> <.stim>`
 4. Replace `<.lib>` `<.cir>` `<.stim>` with the file names of the files being read by the program if they are located in the same directory as the source code or replace them with the files paths if they are not located in the same directory as the source code
