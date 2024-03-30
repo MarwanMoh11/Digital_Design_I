@@ -38,18 +38,18 @@ int main(int argc, char* argv[]) {
     unordered_map<string, pair<bool, int>> curr;
 
 
-    cout << "Reading library file: " << libFile << endl;
+    cout << "Reading library file: "  << endl;
     readlib(libFile, gates);
     cout << "Library file read successfully." << endl;
 
-    cout << "Reading circuit file: " << circFile << endl;
+    cout << "Reading circuit file: "  << endl;
     readcirc(circFile, inputs, c, curr, gates);
     cout << "Circuit file read successfully." << endl;
 
 
     cout << "Current map initialized." << endl;
 
-    cout << "Reading stimulus file: " << stimFile << endl;
+    cout << "Reading stimulus file: " << endl;
     readstim(stimFile, inputs, curr);
     cout << "Stimulus file read successfully." << endl;
 
